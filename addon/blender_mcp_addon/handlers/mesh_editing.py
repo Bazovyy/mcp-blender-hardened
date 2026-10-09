@@ -20,6 +20,68 @@ from ..validation import (
 )
 
 
+def _collect_edge_ring(seed_edge):
+    """Return the quad edge ring containing *seed_edge* without bpy operators."""
+    visited = {seed_edge}
+    pending = [seed_edge]
+    while pending:
+        edge = pending.pop()
+        edge_verts = set(edge.verts)
+        for face in edge.link_faces:
+            if len(face.verts) != 4:
+                continue
+            opposite = next((candidate for candidate in face.edges if not edge_verts.intersection(candidate.verts)), None)
+            if opposite is not None and opposite not in visited:
+                visited.add(opposite)
+                pending.append(opposite)
+    return visited
+
+
+def _collect_edge_loop(seed_edge):
+    """Return a regular quad edge loop through *seed_edge* using topology only."""
+    visited = {seed_edge}
+
+    def walk(edge, vertex):
+        current = edge
+        current_vertex = vertex
+        while True:
+            adjacent_faces = set(current.link_faces)
+            candidates = [
+                candidate for candidate in current_vertex.link_edges
+                if candidate is not current and not adjacent_faces.intersection(candidate.link_faces)
+            ]
+            if len(candidates) != 1:
+                return
+            next_edge = candidates[0]
+            if next_edge in visited:
+                return
+            visited.add(next_edge)
+            current_vertex = next_edge.other_vert(current_vertex)
+            current = next_edge
+
+    for vertex in seed_edge.verts:
+        walk(seed_edge, vertex)
+    return visited
+
+
+def _find_view3d_override():
+    """Find a usable interactive VIEW_3D context, or None."""
+    if getattr(bpy.app, "background", False):
+        return None
+    window_manager = getattr(bpy.context, "window_manager", None)
+    if window_manager is None:
+        return None
+    for window in window_manager.windows:
+        screen = window.screen
+        for area in screen.areas:
+            if area.type != "VIEW_3D":
+                continue
+            region = next((region for region in area.regions if region.type == "WINDOW"), None)
+            if region is not None:
+                return {"window": window, "screen": screen, "area": area, "region": region}
+    return None
+
+
 class MeshEditingHandlersMixin:
     """Mixin for mesh editing handlers."""
 
@@ -35,7 +97,7 @@ class MeshEditingHandlersMixin:
         solver = validate_enum(
             params.get("solver", "EXACT"),
             "solver",
-            ["FAST", "EXACT"],
+            ["FLOAT", "EXACT", "MANIFOLD"],
         )
         apply_mod = params.get("apply", True)
         hide_tool = params.get("hide_tool", True)
@@ -504,55 +566,37 @@ class MeshEditingHandlersMixin:
 
 
     def _handle_mesh_loop_cut(self, params: dict) -> dict:
-        """Add edge loops to a mesh via loop cut."""
+        """Add centered edge loops with bmesh, avoiding context-sensitive loopcut_slide."""
+        import bmesh
+
         object_name = require_param(params, "object_name", str)
         edge_index = require_param(params, "edge_index", int)
-        cuts = params.get("cuts", 1)
-        smoothness = params.get("smoothness", 0.0)
-
+        cuts = require_param(params, "cuts", int) if "cuts" in params else 1
+        smoothness = float(params.get("smoothness", 0.0))
+        if cuts < 1:
+            raise ValidationError("cuts must be at least 1")
         obj = get_object_or_error(object_name)
         if obj.type != "MESH":
             raise ValidationError(f"Object '{object_name}' is not a mesh")
-
-        mesh = obj.data
-        if edge_index >= len(mesh.edges):
-            raise ValidationError(f"Edge index {edge_index} out of range (mesh has {len(mesh.edges)} edges)")
-
-        # Use operator for loop cut - requires specific context
-        ensure_object_selected(obj)
-        bpy.context.view_layer.objects.active = obj
-
-        # Enter edit mode
-        bpy.ops.object.mode_set(mode="EDIT")
-        bpy.ops.mesh.select_all(action="DESELECT")
-
-        # Use loopcut operator
-        bpy.ops.mesh.loopcut_slide(
-            MESH_OT_loopcut={
-                "number_cuts": cuts,
-                "smoothness": smoothness,
-                "falloff": "INVERSE_SQUARE",
-                "object_index": 0,
-                "edge_index": edge_index,
-            },
-            TRANSFORM_OT_edge_slide={
-                "value": 0.0,  # centered
-                "single_side": False,
-                "correct_uv": True,
-            },
-        )
-
-        bpy.ops.object.mode_set(mode="OBJECT")
-
-        new_edge_count = len(mesh.edges)
-
-        return {
-            "success": True,
-            "object": object_name,
-            "reference_edge": edge_index,
-            "cuts": cuts,
-            "total_edges": new_edge_count,
-        }
+        bm = bmesh.new()
+        try:
+            bm.from_mesh(obj.data)
+            bm.edges.ensure_lookup_table()
+            if edge_index < 0 or edge_index >= len(bm.edges):
+                raise ValidationError(f"Edge index {edge_index} out of range (mesh has {len(bm.edges)} edges)")
+            ring = list(_collect_edge_ring(bm.edges[edge_index]))
+            if not ring:
+                raise ValidationError("No edge ring found for loop cut")
+            bmesh.ops.subdivide_edges(
+                bm, edges=ring, cuts=cuts, use_grid_fill=True,
+                smooth=smoothness, smooth_falloff="INVERSE_SQUARE",
+            )
+            bm.to_mesh(obj.data)
+        finally:
+            bm.free()
+        obj.data.update()
+        return {"success": True, "object": object_name, "reference_edge": edge_index,
+                "cuts": cuts, "total_edges": len(obj.data.edges)}
 
     # ========== Selection & Query Tools ==========
 
@@ -1035,43 +1079,34 @@ class MeshEditingHandlersMixin:
 
 
     def _handle_mesh_select_edge_loops(self, params: dict) -> dict:
-        """Select complete edge loops or rings through a given edge."""
+        """Select a regular edge loop or ring using bmesh topology."""
+        import bmesh
+
         object_name = require_param(params, "object_name", str)
         edge_index = int(require_param(params, "edge_index", (int, float)))
-        ring = params.get("ring", False)
-
+        ring = bool(params.get("ring", False))
         obj = get_object_or_error(object_name)
         if obj.type != "MESH":
             raise ValidationError(f"Object '{object_name}' is not a mesh")
-
-        mesh = obj.data
-        if edge_index >= len(mesh.edges):
-            raise ValidationError(f"Edge index {edge_index} out of range (mesh has {len(mesh.edges)} edges)")
-
-        ensure_object_selected(obj)
-        bpy.context.view_layer.objects.active = obj
-
-        bpy.ops.object.mode_set(mode="EDIT")
-        bpy.context.tool_settings.mesh_select_mode = (False, True, False)
-        bpy.ops.mesh.select_all(action="DESELECT")
-        bpy.ops.object.mode_set(mode="OBJECT")
-
-        mesh.edges[edge_index].select = True
-
-        bpy.ops.object.mode_set(mode="EDIT")
-        bpy.ops.mesh.loop_multi_select(ring=ring)
-        bpy.ops.object.mode_set(mode="OBJECT")
-
-        selected = [e.index for e in mesh.edges if e.select]
-
-        return {
-            "success": True,
-            "object": object_name,
-            "seed_edge": edge_index,
-            "ring": ring,
-            "selected_indices": selected,
-            "count": len(selected),
-        }
+        bm = bmesh.new()
+        try:
+            bm.from_mesh(obj.data)
+            bm.edges.ensure_lookup_table()
+            if edge_index < 0 or edge_index >= len(bm.edges):
+                raise ValidationError(f"Edge index {edge_index} out of range (mesh has {len(bm.edges)} edges)")
+            for edge in bm.edges:
+                edge.select = False
+            seed = bm.edges[edge_index]
+            selected_edges = _collect_edge_ring(seed) if ring else _collect_edge_loop(seed)
+            for edge in selected_edges:
+                edge.select = True
+            selected = sorted(edge.index for edge in selected_edges)
+            bm.to_mesh(obj.data)
+        finally:
+            bm.free()
+        obj.data.update()
+        return {"success": True, "object": object_name, "seed_edge": edge_index,
+                "ring": ring, "selected_indices": selected, "count": len(selected)}
 
     # ========== Shading & Normal Control ==========
 
@@ -1591,7 +1626,7 @@ class MeshEditingHandlersMixin:
                 mesh.edges[i].select = True
 
         bpy.ops.object.mode_set(mode="EDIT")
-        bpy.ops.transform.edge_slide(value=factor, single_side=False, even=even)
+        bpy.ops.transform.edge_slide(value=factor, single_side=False, use_even=even)
         bpy.ops.object.mode_set(mode="OBJECT")
 
         return {
@@ -1707,64 +1742,38 @@ class MeshEditingHandlersMixin:
 
 
     def _handle_mesh_knife_project(self, params: dict) -> dict:
-        """Project a curve/mesh onto a target surface to cut panel lines."""
+        """Project cutter geometry using a real VIEW_3D context; never substitute a boolean."""
+        from ..state_guard import BlenderStateGuard
+
         target_name = require_param(params, "target_object", str)
         cutter_name = require_param(params, "cutter_object", str)
-        cut_through = params.get("cut_through", False)
-
+        cut_through = bool(params.get("cut_through", False))
         target = get_object_or_error(target_name)
         cutter = get_object_or_error(cutter_name)
-
         if target.type != "MESH":
             raise ValidationError(f"Target '{target_name}' is not a mesh")
-
-        ensure_object_selected(target)
-        bpy.context.view_layer.objects.active = target
-        cutter.select_set(True)
-
-        bpy.ops.object.mode_set(mode="EDIT")
-        bpy.ops.mesh.select_all(action="DESELECT")
-
+        override = _find_view3d_override()
+        if override is None:
+            return {"success": False, "code": "context_required", "target": target_name,
+                    "cutter": cutter_name, "method": "knife_project",
+                    "error": "Knife Project requires an active VIEW_3D window context"}
         try:
-            bpy.ops.mesh.knife_project(cut_through=cut_through)
-            bpy.ops.object.mode_set(mode="OBJECT")
-            return {
-                "success": True,
-                "target": target_name,
-                "cutter": cutter_name,
-                "method": "knife_project",
-            }
-        except RuntimeError:
-            bpy.ops.object.mode_set(mode="OBJECT")
-
-        # Fallback: use boolean INTERSECT to cut geometry
-        try:
-            mod = target.modifiers.new(name="KnifeFallback", type="BOOLEAN")
-            mod.operation = "INTERSECT"
-            mod.object = cutter
-            mod.solver = "EXACT"
-
-            ensure_object_selected(target)
-            bpy.context.view_layer.objects.active = target
-            bpy.ops.object.modifier_apply(modifier=mod.name)
-            cutter.hide_set(True)
-
-            return {
-                "success": True,
-                "target": target_name,
-                "cutter": cutter_name,
-                "method": "boolean_intersect_fallback",
-                "note": "Knife project requires 3D viewport. Used boolean INTERSECT as fallback.",
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "target": target_name,
-                "cutter": cutter_name,
-                "method": "failed",
-                "error": str(e),
-                "note": "Both knife_project and boolean fallback failed. Use blender_boolean_op manually.",
-            }
+            with BlenderStateGuard():
+                if bpy.context.object is not None and bpy.context.object.mode != "OBJECT":
+                    bpy.ops.object.mode_set(mode="OBJECT")
+                for obj in bpy.context.selected_objects:
+                    obj.select_set(False)
+                cutter.select_set(True)
+                target.select_set(True)
+                bpy.context.view_layer.objects.active = target
+                with bpy.context.temp_override(**override):
+                    bpy.ops.object.mode_set(mode="EDIT")
+                    bpy.ops.mesh.select_all(action="DESELECT")
+                    bpy.ops.mesh.knife_project(cut_through=cut_through)
+            return {"success": True, "target": target_name, "cutter": cutter_name, "method": "knife_project"}
+        except (RuntimeError, TypeError) as exc:
+            return {"success": False, "code": "knife_project_failed", "target": target_name,
+                    "cutter": cutter_name, "method": "knife_project", "error": str(exc)}
 
 
     def _handle_mesh_bisect(self, params: dict) -> dict:

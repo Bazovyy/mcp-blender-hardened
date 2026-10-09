@@ -20,6 +20,7 @@ class ToolCase:
     assert_result: ResultAssert | None = None
     cleanup: Cleanup | None = None
     skip_external: str | None = None
+    qualification_case: str | None = None
 
 
 def _empty_payload() -> dict[str, Any]:
@@ -60,11 +61,23 @@ def _classify(name: str) -> tuple[str, str | None]:
     return "bounded_mutation", None
 
 
+_QUALIFICATION_CASES = {
+    "blender_boolean_op": "boolean_float",
+    "blender_mesh_select_edge_loops": "edge_loop",
+    "blender_mesh_edge_slide": "edge_slide",
+    "blender_mesh_loop_cut": "loop_cut",
+    "blender_mesh_knife_project": "knife_context",
+}
+
+
 def build_manifest() -> list[ToolCase]:
     cases: list[ToolCase] = []
     for name in discover_mcp_tool_names():
         risk, skip = _classify(name)
-        cases.append(ToolCase(name=name, risk=risk, payload_factory=_empty_payload, skip_external=skip))
+        cases.append(ToolCase(
+            name=name, risk=risk, payload_factory=_empty_payload, skip_external=skip,
+            qualification_case=_QUALIFICATION_CASES.get(name),
+        ))
     return cases
 
 

@@ -1930,9 +1930,9 @@ TOOLS: list[Tool] = [
                 },
                 "solver": {
                     "type": "string",
-                    "enum": ["FAST", "EXACT"],
+                    "enum": ["FLOAT", "EXACT", "MANIFOLD"],
                     "default": "EXACT",
-                    "description": "Boolean solver (EXACT is more reliable, FAST is quicker)",
+                    "description": "Blender 5.2 Boolean solver (FLOAT, EXACT, or MANIFOLD)",
                 },
                 "apply": {
                     "type": "boolean",
