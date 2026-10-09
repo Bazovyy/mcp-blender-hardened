@@ -43,8 +43,15 @@ class MCP_OT_StartServer(bpy.types.Operator):
             return {"CANCELLED"}
 
         props = context.scene.mcp_server_props
-        _server = MCPSocketServer(host=props.host, port=props.port)
-        _server.start()
+        _server = MCPSocketServer(
+            host=props.host,
+            port=props.port,
+            allow_non_loopback=props.allow_non_loopback,
+        )
+        if not _server.start():
+            _server = None
+            self.report({"ERROR"}, f"Failed to start MCP server on {props.host}:{props.port}")
+            return {"CANCELLED"}
         self.report({"INFO"}, f"MCP server started on {props.host}:{props.port}")
         return {"FINISHED"}
 
@@ -88,6 +95,8 @@ class MCP_PT_ServerPanel(bpy.types.Panel):
         row.prop(props, "host")
         row = box.row()
         row.prop(props, "port")
+        row = box.row()
+        row.prop(props, "allow_non_loopback")
 
         # Server status and controls
         layout.separator()
@@ -115,9 +124,14 @@ class MCPServerProperties(bpy.types.PropertyGroup):
     port: bpy.props.IntProperty(
         name="Port",
         description="Port to listen on",
-        default=9876,
+        default=9877,
         min=1024,
         max=65535,
+    )
+    allow_non_loopback: bpy.props.BoolProperty(
+        name="Allow non-loopback bind",
+        description="Unsafe developer option: allow binding outside localhost",
+        default=False,
     )
 
 

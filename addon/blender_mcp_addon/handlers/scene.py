@@ -75,9 +75,13 @@ class SceneHandlersMixin:
         caller (connection reset). That is expected, not an error: reconnect
         and call ``ping`` to confirm the new server is up.
         """
-        bpy.ops.mcp.stop_server()
-        bpy.ops.mcp.start_server()
-        return {"success": True, "note": "Server cycled; reconnect and ping to confirm."}
+        from .. import get_server
+
+        server = get_server()
+        if server is None or not server.is_running:
+            raise RuntimeError("MCP server is not running")
+        server.request_restart()
+        return {"success": True, "note": "Server restart scheduled after response flush."}
 
     # ========== Object Handlers ==========
 
