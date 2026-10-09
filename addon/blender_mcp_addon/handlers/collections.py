@@ -4,6 +4,7 @@ import os
 
 import bpy
 
+from ..file_policy import prepare_output_path
 from ..validation import (
     ValidationError,
     require_param,
@@ -335,10 +336,7 @@ class CollectionHandlersMixin:
         if not filepath.lower().endswith(".blend"):
             filepath += ".blend"
 
-        # Create parent directories if they don't exist
-        parent_dir = os.path.dirname(filepath)
-        if parent_dir:
-            os.makedirs(parent_dir, exist_ok=True)
+        filepath = prepare_output_path(filepath, overwrite=bool(params.get("overwrite", False)))
 
         bpy.ops.wm.save_as_mainfile(
             filepath=filepath,

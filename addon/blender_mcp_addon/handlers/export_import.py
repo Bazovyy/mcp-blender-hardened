@@ -4,6 +4,8 @@ import os
 
 import bpy
 
+from ..file_policy import prepare_output_path
+from ..state_guard import BlenderStateGuard
 from ..validation import (
     ValidationError,
     require_param,
@@ -12,37 +14,37 @@ from ..validation import (
 )
 
 
+def _prepare_export_path(params: dict) -> str:
+    path = validate_filepath(require_param(params, "filepath", str), "filepath")
+    return prepare_output_path(path, overwrite=bool(params.get("overwrite", False)))
+
+
 class ExportImportHandlersMixin:
     """Mixin for export/import handlers."""
 
     def _handle_export_gltf(self, params: dict) -> dict:
         """Export to glTF/GLB."""
-        filepath = validate_filepath(
-            require_param(params, "filepath", str),
-            "filepath"
-        )
+        filepath = _prepare_export_path(params)
         export_format = validate_enum(
             params.get("export_format", "GLB"),
             "export_format",
             ["GLB", "GLTF_SEPARATE", "GLTF_EMBEDDED"]
         )
 
-        bpy.ops.export_scene.gltf(
-            filepath=filepath,
-            export_format=export_format,
-            use_selection=params.get("selected_only", False),
-            export_animations=params.get("export_animations", True),
-            export_materials="EXPORT" if params.get("export_materials", True) else "NONE",
-        )
+        with BlenderStateGuard():
+            bpy.ops.export_scene.gltf(
+                filepath=filepath,
+                export_format=export_format,
+                use_selection=params.get("selected_only", False),
+                export_animations=params.get("export_animations", True),
+                export_materials="EXPORT" if params.get("export_materials", True) else "NONE",
+            )
         return {"filepath": filepath}
 
 
     def _handle_export_fbx(self, params: dict) -> dict:
         """Export to FBX with comprehensive options."""
-        filepath = validate_filepath(
-            require_param(params, "filepath", str),
-            "filepath"
-        )
+        filepath = _prepare_export_path(params)
 
         export_kwargs = {
             "filepath": filepath,
@@ -62,7 +64,8 @@ class ExportImportHandlersMixin:
         if "axis_up" in params:
             export_kwargs["axis_up"] = params["axis_up"]
 
-        bpy.ops.export_scene.fbx(**export_kwargs)
+        with BlenderStateGuard():
+            bpy.ops.export_scene.fbx(**export_kwargs)
 
         return {
             "filepath": filepath,
@@ -73,10 +76,7 @@ class ExportImportHandlersMixin:
 
     def _handle_export_obj(self, params: dict) -> dict:
         """Export to OBJ with options."""
-        filepath = validate_filepath(
-            require_param(params, "filepath", str),
-            "filepath"
-        )
+        filepath = _prepare_export_path(params)
 
         export_kwargs = {
             "filepath": filepath,
@@ -94,7 +94,8 @@ class ExportImportHandlersMixin:
         if "export_materials" in params:
             export_kwargs["export_materials"] = params["export_materials"]
 
-        bpy.ops.wm.obj_export(**export_kwargs)
+        with BlenderStateGuard():
+            bpy.ops.wm.obj_export(**export_kwargs)
 
         return {
             "filepath": filepath,
@@ -105,10 +106,7 @@ class ExportImportHandlersMixin:
 
     def _handle_export_stl(self, params: dict) -> dict:
         """Export to STL (for 3D printing)."""
-        filepath = validate_filepath(
-            require_param(params, "filepath", str),
-            "filepath"
-        )
+        filepath = _prepare_export_path(params)
 
         export_kwargs = {
             "filepath": filepath,
@@ -131,7 +129,8 @@ class ExportImportHandlersMixin:
             stl_kwargs["global_scale"] = export_kwargs["global_scale"]
         if "ascii" in export_kwargs:
             stl_kwargs["ascii_format"] = export_kwargs["ascii"]
-        bpy.ops.wm.stl_export(**stl_kwargs)
+        with BlenderStateGuard():
+            bpy.ops.wm.stl_export(**stl_kwargs)
 
         return {
             "filepath": filepath,
@@ -189,10 +188,7 @@ class ExportImportHandlersMixin:
 
     def _handle_export_usd(self, params: dict) -> dict:
         """Export to Universal Scene Description (USD) format."""
-        filepath = validate_filepath(
-            require_param(params, "filepath", str),
-            "filepath"
-        )
+        filepath = _prepare_export_path(params)
 
         export_kwargs = {
             "filepath": filepath,
@@ -204,7 +200,8 @@ class ExportImportHandlersMixin:
         if "export_materials" in params:
             export_kwargs["export_materials"] = params["export_materials"]
 
-        bpy.ops.wm.usd_export(**export_kwargs)
+        with BlenderStateGuard():
+            bpy.ops.wm.usd_export(**export_kwargs)
 
         return {
             "filepath": filepath,

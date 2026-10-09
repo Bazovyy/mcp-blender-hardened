@@ -50,10 +50,13 @@ class MainThreadDispatcher:
                 result = self.handlers.handle(envelope.method, envelope.params)
                 response = {"jsonrpc": "2.0", "result": normalize_handler_result(result), "id": envelope.id}
             except Exception as exc:
-                code = "validation_error" if type(exc).__name__ == "ValidationError" else "handler_exception"
+                code = getattr(exc, "code", None) or ("validation_error" if type(exc).__name__ == "ValidationError" else "handler_exception")
+                details = {"exception": type(exc).__name__}
+                if getattr(exc, "path", None):
+                    details["path"] = exc.path
                 response = {
                     "jsonrpc": "2.0",
-                    "result": fail(code, str(exc), {"exception": type(exc).__name__}),
+                    "result": fail(code, str(exc), details),
                     "id": envelope.id,
                 }
             self.response_callback(envelope, response)

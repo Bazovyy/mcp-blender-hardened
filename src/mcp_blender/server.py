@@ -530,6 +530,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "output_path": {"type": "string", "description": "Output file path"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "file_format": {
                     "type": "string",
                     "enum": ["PNG", "JPEG", "BMP", "TIFF", "OPEN_EXR"],
@@ -546,6 +547,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "output_path": {"type": "string", "description": "Output path (with frame placeholder)"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "file_format": {"type": "string", "description": "Output format"},
                 "start_frame": {"type": "integer", "description": "Start frame"},
                 "end_frame": {"type": "integer", "description": "End frame"},
@@ -588,6 +590,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "output_path": {"type": "string", "description": "Explicit user-owned output path; omitted creates managed temporary output"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
             },
             "required": [],
         },
@@ -600,6 +603,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "filepath": {"type": "string", "description": "Output file path"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "export_format": {"type": "string", "enum": ["GLB", "GLTF_SEPARATE", "GLTF_EMBEDDED"], "description": "Export format"},
                 "selected_only": {"type": "boolean", "description": "Export selected objects only"},
                 "export_animations": {"type": "boolean", "description": "Include animations"},
@@ -615,6 +619,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "filepath": {"type": "string", "description": "Output file path"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "selected_only": {"type": "boolean", "description": "Export selected objects only"},
                 "apply_modifiers": {"type": "boolean", "description": "Apply modifiers"},
             },
@@ -628,6 +633,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "filepath": {"type": "string", "description": "Output file path"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "selected_only": {"type": "boolean", "description": "Export selected objects only"},
                 "apply_modifiers": {"type": "boolean", "description": "Apply modifiers"},
             },
@@ -641,6 +647,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "filepath": {"type": "string", "description": "Output file path"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "selected_only": {"type": "boolean", "description": "Export selected objects only"},
                 "apply_modifiers": {"type": "boolean", "description": "Apply modifiers"},
                 "scale": {"type": "number", "description": "Global scale factor"},
@@ -656,6 +663,7 @@ TOOLS: list[Tool] = [
             "type": "object",
             "properties": {
                 "filepath": {"type": "string", "description": "Output file path (.usd, .usda, .usdc)"},
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing output (default: false)"},
                 "selected_only": {"type": "boolean", "description": "Export selected objects only"},
                 "export_animation": {"type": "boolean", "description": "Include animations"},
                 "export_materials": {"type": "boolean", "description": "Include materials"},
@@ -5285,6 +5293,7 @@ TOOLS: list[Tool] = [
                     "type": "string",
                     "description": "Full file path to save to (should end in .blend)",
                 },
+                "overwrite": {"type": "boolean", "default": False, "description": "Allow replacing an existing .blend file (default: false)"},
                 "compress": {
                     "type": "boolean",
                     "description": "Use file compression (default: false)",

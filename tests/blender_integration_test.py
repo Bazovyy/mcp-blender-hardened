@@ -409,6 +409,7 @@ def test_render_image(runner: TestRunner):
         result = runner.handlers.handle("render_image", {
             "output_path": output_path,
             "file_format": "PNG",
+            "overwrite": True,
         })
         assert os.path.exists(output_path), "Render output not created"
     finally:
@@ -428,6 +429,7 @@ def test_export_gltf(runner: TestRunner):
         result = runner.handlers.handle("export_gltf", {
             "filepath": output_path,
             "export_format": "GLB",
+            "overwrite": True,
         })
         assert os.path.exists(output_path), "GLB file not created"
     finally:
@@ -446,6 +448,7 @@ def test_export_obj(runner: TestRunner):
     try:
         result = runner.handlers.handle("export_obj", {
             "filepath": output_path,
+            "overwrite": True,
         })
         assert os.path.exists(output_path), "OBJ file not created"
     finally:
@@ -462,7 +465,7 @@ def test_stl_roundtrip(runner: TestRunner):
         output_path = f.name
 
     try:
-        runner.handlers.handle("export_stl", {"filepath": output_path})
+        runner.handlers.handle("export_stl", {"filepath": output_path, "overwrite": True})
         assert os.path.exists(output_path), "STL file not created"
 
         runner.handlers.handle("scene_clear", {})

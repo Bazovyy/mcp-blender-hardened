@@ -7,6 +7,7 @@ import bpy
 
 from .. import compat
 from ..context import find_view3d_context
+from ..file_policy import prepare_output_path
 from ..state_guard import BlenderStateGuard
 from ..temp_assets import get_temp_asset_manager
 from ..utils import get_object_or_error
@@ -21,42 +22,43 @@ class RenderHandlersMixin:
     """Mixin for render-related handlers."""
 
     def _handle_render_image(self, params: dict) -> dict:
-        """Render current frame to file."""
-        output_path = validate_filepath(
-            require_param(params, "output_path", str),
-            "output_path"
+        """Render current frame to a user-owned file without leaking render state."""
+        output_path = prepare_output_path(
+            validate_filepath(require_param(params, "output_path", str), "output_path"),
+            overwrite=bool(params.get("overwrite", False)),
         )
-        valid_formats = ["PNG", "JPEG", "BMP", "TIFF", "OPEN_EXR", "HDR"]
         file_format = validate_enum(
-            params.get("file_format", "PNG"),
-            "file_format",
-            valid_formats
+            params.get("file_format", "PNG"), "file_format",
+            ["PNG", "JPEG", "BMP", "TIFF", "OPEN_EXR", "HDR"],
         )
-
         scene = bpy.context.scene
-        scene.render.image_settings.file_format = file_format
-        scene.render.filepath = output_path
-
-        bpy.ops.render.render(write_still=True)
-        return {"output_path": output_path}
+        with BlenderStateGuard():
+            scene.render.image_settings.file_format = file_format
+            scene.render.filepath = output_path
+            bpy.ops.render.render(write_still=True)
+        return {"success": True, "output_path": output_path}
 
 
     def _handle_render_animation(self, params: dict) -> dict:
-        """Render animation."""
-        output_path = params["output_path"]
-        file_format = params.get("file_format", "PNG").upper()
-
+        """Render animation to a user-owned path without leaking scene state."""
+        output_path = prepare_output_path(
+            validate_filepath(require_param(params, "output_path", str), "output_path"),
+            overwrite=bool(params.get("overwrite", False)),
+        )
+        file_format = validate_enum(
+            params.get("file_format", "PNG").upper(), "file_format",
+            ["PNG", "JPEG", "BMP", "TIFF", "OPEN_EXR", "HDR"],
+        )
         scene = bpy.context.scene
-        scene.render.image_settings.file_format = file_format
-        scene.render.filepath = output_path
-
-        if params.get("start_frame"):
-            scene.frame_start = params["start_frame"]
-        if params.get("end_frame"):
-            scene.frame_end = params["end_frame"]
-
-        bpy.ops.render.render(animation=True)
-        return {"output_path": output_path}
+        with BlenderStateGuard():
+            scene.render.image_settings.file_format = file_format
+            scene.render.filepath = output_path
+            if params.get("start_frame") is not None:
+                scene.frame_start = int(params["start_frame"])
+            if params.get("end_frame") is not None:
+                scene.frame_end = int(params["end_frame"])
+            bpy.ops.render.render(animation=True)
+        return {"success": True, "output_path": output_path}
 
 
     def _handle_render_set_engine(self, params: dict) -> dict:
@@ -89,7 +91,10 @@ class RenderHandlersMixin:
         manager = get_temp_asset_manager()
         explicit = bool(params.get("output_path"))
         if explicit:
-            output_path = validate_filepath(params["output_path"], "output_path")
+            output_path = prepare_output_path(
+                validate_filepath(params["output_path"], "output_path"),
+                overwrite=bool(params.get("overwrite", False)),
+            )
             manager.register(output_path, user_owned=True)
         else:
             output_path = str(manager.new_path(prefix="viewport_", suffix=".png"))
