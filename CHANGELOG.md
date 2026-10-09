@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] ? 2026-10-09
+
+### Security / Runtime hardening
+
+- Blender **5.2.2 LTS** is the only qualified target for the hardened line.
+- TCP defaults to `127.0.0.1:9877`, uses bounded request/output buffers and a queued main-thread dispatcher; disconnect/restart lifecycle no longer executes Blender handlers from socket receive.
+- Replaced unrestricted script execution with an AST-restricted fallback.
+- Added explicit operation/state guards, crash-isolated tests for context-heavy tools, nonblocking runtime jobs, and deterministic error envelopes.
+- Render/export/save outputs default to `overwrite=false`; managed screenshots/temp assets expire after 600 seconds while explicit user outputs are protected.
+
+### Changed
+
+- Tool surface is now **232 MCP tools**, including job status/cancel/list.
+- Migrated modeling, Geometry Nodes, annotations/Grease Pencil, compositor, sculpt, physics, Action/FCurve, MSFS livery brush and render paths to Blender 5.2.2 APIs.
+- Rotation-bearing object tools require an explicit `RADIANS` or `DEGREES` unit; schemas encode exact vector lengths and conditional arguments.
+- Package metadata, addon metadata/logging and the addon ZIP share one `0.5.0` version source.
+
 ### Fixed
 
 - **`validate_enum()` called with swapped arguments in 20 handlers.** Every

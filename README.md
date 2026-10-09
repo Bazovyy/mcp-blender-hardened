@@ -1,16 +1,16 @@
 <div align="center">
 
-<img src="assets/logo-banner.svg" alt="mcp-blender — 218 Blender tools: 3D modeling, AI generation, MSFS content pipeline" width="100%"/>
+<img src="assets/logo-banner.svg" alt="mcp-blender — 232 Blender tools: 3D modeling, AI generation, MSFS content pipeline" width="100%"/>
 
 <br/>
 
 [![License](https://img.shields.io/badge/License-AGPL--3.0-1E40AF.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg)](https://www.python.org/downloads/)
-[![Blender 4.2+](https://img.shields.io/badge/blender-4.2%20%7C%205.0-F5792A.svg)](https://www.blender.org/)
+[![Blender 5.2.2 LTS](https://img.shields.io/badge/blender-5.2.2%20LTS-F5792A.svg)](https://www.blender.org/)
 [![MCP](https://img.shields.io/badge/MCP-server-A78BFA.svg)](https://modelcontextprotocol.io)
 [![eng-mcp-suite](https://img.shields.io/badge/eng--mcp--suite-member-22D3EE.svg)](https://github.com/RFingAdam/eng-mcp-suite)
 
-**Control Blender from any MCP client — 218 tools across modeling, materials, sculpting, animation, AI 3D generation, and MSFS content creation.**
+**Control Blender from any MCP client — 232 tools across modeling, materials, sculpting, animation, AI 3D generation, and MSFS content creation.**
 **Drive it from your IDE, terminal, or AI agent and run an iterative render-analyze-refine loop without leaving Blender.**
 
 [Quick start](#quick-start) ·
@@ -21,29 +21,29 @@
 
 </div>
 
-> Supports **Blender 4.2 LTS** and **Blender 5.0**.
+> Hardened **0.5.x** is qualified for **Blender 5.2.2 LTS**. Other Blender versions are not part of the supported contract.
 
 ---
 
 ## What is mcp-blender?
 
-`mcp-blender` is an MCP server that exposes 218 Blender tools to any
+`mcp-blender` is an MCP server that exposes 232 Blender tools to any
 MCP-compatible AI client (Claude Desktop, Claude Code, Codex CLI, …).
 The MCP server speaks the Model Context Protocol over stdio; a Blender
-addon listens on a local TCP socket and dispatches into Blender's
-`bpy` API on the main thread via `bpy.app.timers`.
+addon listens on a loopback TCP socket, queues requests, and performs bounded
+`bpy` work on Blender's main thread via `bpy.app.timers`.
 
 ```
 ┌─────────────────┐    stdio     ┌─────────────────┐   TCP/JSON-RPC   ┌─────────────────┐
 │  MCP client     │ ◄──────────► │   MCP Server    │ ◄──────────────► │  Blender Addon  │
-│  (Claude / …)   │              │  (Python proc)  │   port 9876      │  (bpy.app.timers)│
+│  (Claude / …)   │              │  (Python proc)  │   port 9877      │  (bpy.app.timers)│
 └─────────────────┘              └─────────────────┘                  └─────────────────┘
 ```
 
 **What it does well:**
 
 - 🤖 **AI-native via MCP.** First-class [Model Context Protocol](https://modelcontextprotocol.io)
-  server with **218 tools** across every Blender pipeline stage.
+  server with **232 tools** across every Blender pipeline stage.
 - 🎨 **End-to-end coverage.** Scene, object, mesh, material, modifier,
   animation, render, export, baking, geometry nodes, sculpting, rigging,
   physics, annotations.
@@ -59,47 +59,43 @@ addon listens on a local TCP socket and dispatches into Blender's
   toward a target prompt.
 - 🪨 **Poly Haven built-in.** Free HDRIs, textures, and models with no
   API key.
-- 🔒 **MIT licensed.**
+- 🔒 **AGPL-3.0-or-later licensed.**
 
 ---
 
 ## Quick start
 
-### 1. Install the MCP server
+### 1. Install the hardened MCP server
+
+Install from this **0.5.x hardened source checkout** so the Python server and Blender addon stay on the same release:
 
 ```bash
-pip install mcp-blender
+python -m pip install -e .
 ```
 
-Or from source:
-
-```bash
-git clone https://github.com/RFingAdam/mcp-blender
-cd mcp-blender
-pip install -e .
-```
+The older PyPI/upstream package may expose a different runtime/tool contract; do not mix it with this addon.
 
 ### 2. Install the Blender addon
 
-**Option A — from ZIP (recommended):**
+**Option A ? matching ZIP (recommended):**
 
-1. Download `blender_mcp_addon.zip` from the [releases page](https://github.com/RFingAdam/mcp-blender/releases).
-2. In Blender: **Edit → Preferences → Add-ons → Install…**
-3. Select the ZIP, enable "MCP Server Addon".
+1. Build the addon from this checkout: `python scripts/package_addon.py`.
+2. In Blender: **Edit ? Preferences ? Add-ons ? Install?**
+3. Select `dist/blender_mcp_addon-0.5.0.zip`, then enable **MCP Server Addon**.
 
 **Option B — from source:**
 
 ```bash
 # Linux
 ln -s /path/to/mcp-blender/addon/blender_mcp_addon \
-      ~/.config/blender/4.2/scripts/addons/
+      ~/.config/blender/5.2/scripts/addons/
 
 # macOS
 ln -s /path/to/mcp-blender/addon/blender_mcp_addon \
-      ~/Library/Application\ Support/Blender/4.2/scripts/addons/
+      ~/Library/Application\ Support/Blender/5.2/scripts/addons/
 
 # Windows (admin)
-mklink /D "%APPDATA%\Blender Foundation\Blender\4.2\scripts\addons\blender_mcp_addon" ^
+mklink /D "%APPDATA%\Blender Foundation\Blender\5.2\scripts\addons\blender_mcp_addon" ^
        "C:\path\to\mcp-blender\addon\blender_mcp_addon"
 ```
 
@@ -112,7 +108,7 @@ Then enable the addon in Blender preferences.
   "mcpServers": {
     "blender": {
       "command": "mcp-blender",
-      "args": ["--port", "9876"]
+      "args": ["--port", "9877"]
     }
   }
 }
@@ -129,7 +125,7 @@ Then enable the addon in Blender preferences.
 1. Open Blender.
 2. Press `N` in the 3D viewport.
 3. Open the "MCP Server" panel.
-4. Click "Start Server" — confirm "Server running on port 9876".
+4. Click "Start Server" — confirm "Server running on port 9877".
 
 </td>
 <td valign="top" width="50%">
@@ -150,7 +146,7 @@ Try:
 
 ## Tools
 
-218 MCP tools, grouped by Blender pipeline stage. Full grouped
+232 MCP tools, grouped by Blender pipeline stage. Full grouped
 reference (with source links) in [`docs/tools.md`](docs/tools.md).
 
 | Category                | Tools | Examples                                                              |
@@ -304,7 +300,7 @@ Part of [eng-mcp-suite](https://github.com/RFingAdam/eng-mcp-suite).
 ## Documentation
 
 - 📘 **[Quick Start](docs/index.md)** — install through first call.
-- 🛠️ **[Tool reference](docs/tools.md)** — all 218 tools grouped by stage.
+- 🛠️ **[Tool reference](docs/tools.md)** — all 232 tools grouped by stage.
 - 📐 **[Usage examples](docs/usage.md)** — end-to-end walkthroughs (self-refine, MSFS, livery).
 - 🏗️ **[Architecture](docs/architecture.md)** — how this MCP fits in eng-mcp-suite.
 - ✈️ **[MSFS roadmap](docs/MSFS_ROADMAP.md)** — MSFS content workflow.
@@ -344,30 +340,31 @@ or jump to a sibling:</sub>
 mcp-blender --help
 
 Options:
-  --host TEXT   Blender addon host  [default: localhost]
-  --port INT    Blender addon port  [default: 9876]
+  --host TEXT   Blender addon host  [default: 127.0.0.1]
+  --port INT    Blender addon port  [default: 9877]
 ```
 
 ### Blender addon panel
 
 In the 3D viewport sidebar:
 
-- **Port** — TCP port for the socket server (default 9876).
+- **Port** — TCP port for the socket server (default 9877).
 - **Start / Stop Server** — toggle the MCP socket server.
 
 ---
 
-## Version compatibility
+## Supported Blender/runtime contract
 
-The addon ships a compatibility layer for Blender API differences:
+Hardened **0.5.x targets Blender 5.2.2 LTS only**. The implementation uses the 5.2 APIs directly: `BLENDER_EEVEE`, Action layers/strips/channelbags, Geometry Nodes modifier properties, current Grease Pencil/annotation APIs, and current sculpt/brush properties. Older compatibility is best-effort and is not tested or promised.
 
-| Feature           | Blender 4.2                | Blender 5.0                                            |
-| ----------------- | -------------------------- | ------------------------------------------------------ |
-| Action FCurves    | `action.fcurves`           | `action.slots[].layers[].strips[].channels`            |
-| mathutils         | float64                    | float32                                                |
-| Render engine     | `BLENDER_EEVEE` (< 4.2)    | `BLENDER_EEVEE_NEXT` (4.2+)                            |
+Runtime safety differs from upstream 0.4.x:
 
-The layer handles these differences automatically.
+- TCP binds to `127.0.0.1:9877` by default and rejects non-loopback binding unless explicitly opted into by code.
+- Socket reads parse/queue only; Blender mutations run through a bounded main-thread dispatcher.
+- Long-running work uses `blender_job_status`, `blender_job_cancel`, and `blender_job_list` rather than sleeping inside Blender's timer callback.
+- `execute_script` is restricted by default: imports, filesystem/process/network access, dangerous window-manager operations, dunder traversal, and unbounded loops are rejected.
+- User-owned render/export/save outputs do **not** overwrite existing files unless `overwrite=true`.
+- Bridge-owned screenshots and temporary render assets expire after **600 seconds**; explicit user output paths are never TTL-cleaned.
 
 ---
 
@@ -375,14 +372,14 @@ The layer handles these differences automatically.
 
 **"Connection refused"** — make sure Blender is running, the MCP Server
 panel shows "Server running", the port matches, and the firewall allows
-local TCP on `9876`.
+local TCP on `9877`.
 
 **"Tool not found"** — restart Claude / Codex after editing the MCP
 config; verify `mcp-blender --help` runs; check the client's MCP server
 log.
 
 **Addon not appearing in Blender** — check Blender's system console for
-errors; verify Python version (Blender 4.2+ uses Python 3.11+); try
+errors; verify you are running Blender **5.2.2 LTS** and its bundled Python; try
 reinstalling.
 
 **Poly Haven downloads fail** — check connectivity; verify the asset

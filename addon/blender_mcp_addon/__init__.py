@@ -1,10 +1,12 @@
 """Blender MCP Addon - Socket server for MCP integration."""
 
+from ._version import VERSION_TUPLE, __version__
+
 bl_info = {
     "name": "MCP Server Addon",
     "author": "MCP Blender Contributors",
-    "version": (0, 3, 0),
-    "blender": (4, 2, 0),
+    "version": VERSION_TUPLE,
+    "blender": (5, 2, 2),
     "location": "View3D > Sidebar > MCP Server",
     "description": "Socket server for Model Context Protocol integration with AI assistants",
     "category": "Interface",
@@ -13,7 +15,7 @@ bl_info = {
 import logging
 
 _logger = logging.getLogger(__name__)
-_logger.info("MCP addon loaded - version 0.2.0")
+_logger.info("MCP addon loaded - version %s", __version__)
 
 import bpy
 

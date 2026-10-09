@@ -13,17 +13,10 @@ from pathlib import Path
 
 
 def get_version():
-    """Get addon version from __init__.py."""
-    init_path = Path(__file__).parent.parent / "addon" / "blender_mcp_addon" / "__init__.py"
-    with open(init_path) as f:
-        for line in f:
-            if '"version":' in line:
-                # Extract version tuple from line like: "version": (0, 1, 0),
-                import re
-                match = re.search(r'\((\d+),\s*(\d+),\s*(\d+)\)', line)
-                if match:
-                    return f"{match.group(1)}.{match.group(2)}.{match.group(3)}"
-    return "0.0.0"
+    """Read the single release version source used by Hatchling and the addon."""
+    version_path = Path(__file__).parent.parent / "addon" / "blender_mcp_addon" / "_version.py"
+    import runpy
+    return str(runpy.run_path(str(version_path))["__version__"])
 
 
 def package_addon(output_path: str | None = None):
