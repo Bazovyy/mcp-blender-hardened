@@ -170,3 +170,21 @@ def test_runtime_dispatcher_obeys_item_budget():
     assert handled == ["m0", "m1"]
     assert len(dispatcher) == 1
     assert len(responses) == 2
+
+
+def test_dispatcher_normalizes_handler_failures_to_wire_envelope():
+    runtime = importlib.import_module("blender_mcp_addon.runtime")
+    responses = []
+    class Handler:
+        def handle(self, method, params):
+            if method == "reported":
+                return {"success": False, "error": "bad input"}
+            raise ValueError("boom")
+    dispatcher = runtime.MainThreadDispatcher(Handler(), lambda envelope, response: responses.append(response))
+    dispatcher.enqueue(runtime.RequestEnvelope("1", "reported", {}, object()))
+    dispatcher.enqueue(runtime.RequestEnvelope("2", "raised", {}, object()))
+    assert dispatcher.tick(max_items=2, time_budget_ms=100) == 2
+    assert responses[0]["result"]["ok"] is False
+    assert responses[0]["result"]["error"]["code"] == "handler_failed"
+    assert responses[1]["result"]["ok"] is False
+    assert responses[1]["result"]["error"]["code"] == "handler_exception"

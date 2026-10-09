@@ -30,7 +30,7 @@ _client: BlenderClient | None = None
 _client_lock = asyncio.Lock()
 
 
-async def get_client(host: str = "127.0.0.1", port: int = 9876) -> BlenderClient:
+async def get_client(host: str = "127.0.0.1", port: int = 9877) -> BlenderClient:
     """Get or create the Blender client connection."""
     global _client
     async with _client_lock:
@@ -5914,6 +5914,17 @@ TOOLS: list[Tool] = [
 ]
 
 
+def _call_tool_result_from_blender(result) -> CallToolResult:
+    """Convert the Blender wire envelope to MCP content/error semantics."""
+    if isinstance(result, dict):
+        result_text = json.dumps(result, indent=2)
+        is_error = result.get("ok") is False
+    else:
+        result_text = str(result)
+        is_error = False
+    return CallToolResult(content=[TextContent(type="text", text=result_text)], isError=is_error)
+
+
 def create_server(host: str, port: int) -> Server:
     """Create and configure the MCP server."""
     server = Server("mcp-blender")
@@ -5929,7 +5940,7 @@ def create_server(host: str, port: int) -> Server:
     ) -> CallToolResult:
         """Handle tool calls by forwarding to Blender."""
         name = params.name
-        arguments = params.arguments or {}
+        arguments = dict(params.arguments or {})
         logger.info(f"Tool call: {name} with args: {arguments}")
         try:
             client = await get_client(host, port)
@@ -5947,12 +5958,7 @@ def create_server(host: str, port: int) -> Server:
                 }
                 timeout = 600.0 if command in _long_running else 30.0
             result = await client.send_command(command, arguments, timeout=timeout)
-            # Format result as text
-            if isinstance(result, dict):
-                result_text = json.dumps(result, indent=2)
-            else:
-                result_text = str(result)
-            return CallToolResult(content=[TextContent(type="text", text=result_text)])
+            return _call_tool_result_from_blender(result)
         except ConnectionRefusedError:
             return CallToolResult(
                 content=[TextContent(
@@ -5995,8 +6001,8 @@ def main():
     parser.add_argument(
         "--port",
         type=int,
-        default=9876,
-        help="Blender addon port (default: 9876)",
+        default=9877,
+        help="Blender addon port (default: 9877)",
     )
     args = parser.parse_args()
 

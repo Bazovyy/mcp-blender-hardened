@@ -1,6 +1,7 @@
 """Parameter validation utilities for MCP handlers."""
 
 from typing import Any
+import math
 
 
 class ValidationError(Exception):
@@ -35,10 +36,12 @@ def require_param(params: dict, name: str, param_type: type | None = None) -> An
 
     value = params[name]
 
-    if param_type is not None and not isinstance(value, param_type):
-        raise ValidationError(
-            f"Parameter '{name}' must be {param_type.__name__}, got {type(value).__name__}"
-        )
+    if param_type is not None:
+        numeric_type = param_type in (int, float)
+        if (numeric_type and isinstance(value, bool)) or not isinstance(value, param_type):
+            raise ValidationError(
+                f"Parameter '{name}' must be {param_type.__name__}, got {type(value).__name__}"
+            )
 
     return value
 
@@ -69,10 +72,12 @@ def optional_param(
 
     value = params[name]
 
-    if param_type is not None and value is not None and not isinstance(value, param_type):
-        raise ValidationError(
-            f"Parameter '{name}' must be {param_type.__name__}, got {type(value).__name__}"
-        )
+    if param_type is not None and value is not None:
+        numeric_type = param_type in (int, float)
+        if (numeric_type and isinstance(value, bool)) or not isinstance(value, param_type):
+            raise ValidationError(
+                f"Parameter '{name}' must be {param_type.__name__}, got {type(value).__name__}"
+            )
 
     return value
 
@@ -97,10 +102,15 @@ def validate_vector3(value: Any, name: str) -> list[float]:
     if len(value) != 3:
         raise ValidationError(f"Parameter '{name}' must have 3 elements, got {len(value)}")
 
+    if any(isinstance(v, bool) for v in value):
+        raise ValidationError(f"Parameter '{name}' elements must be finite numbers, not booleans")
     try:
-        return [float(v) for v in value]
+        result = [float(v) for v in value]
     except (TypeError, ValueError) as e:
         raise ValidationError(f"Parameter '{name}' elements must be numbers: {e}")
+    if not all(math.isfinite(v) for v in result):
+        raise ValidationError(f"Parameter '{name}' elements must be finite numbers")
+    return result
 
 
 def validate_color(value: Any, name: str) -> list[float]:
@@ -123,10 +133,14 @@ def validate_color(value: Any, name: str) -> list[float]:
     if len(value) not in (3, 4):
         raise ValidationError(f"Parameter '{name}' must have 3 or 4 elements (RGB/RGBA)")
 
+    if any(isinstance(v, bool) for v in value):
+        raise ValidationError(f"Parameter '{name}' elements must be finite numbers, not booleans")
     try:
         color = [float(v) for v in value]
     except (TypeError, ValueError) as e:
         raise ValidationError(f"Parameter '{name}' elements must be numbers: {e}")
+    if not all(math.isfinite(v) for v in color):
+        raise ValidationError(f"Parameter '{name}' elements must be finite numbers")
 
     # Pad to 4 elements if RGB
     if len(color) == 3:
@@ -198,3 +212,18 @@ def validate_filepath(value: Any, name: str, must_exist: bool = False) -> str:
         raise ValidationError(f"File not found: {value}")
 
     return value
+
+
+def require_any_param(params: dict, names: list[str] | tuple[str, ...]) -> str:
+    """Require at least one named parameter to contain a meaningful value."""
+    for name in names:
+        if name not in params:
+            continue
+        value = params[name]
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        return name
+    joined = ", ".join(names)
+    raise ValidationError(f"At least one of these parameters is required: {joined}")

@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from time import perf_counter
 from typing import Any, Callable
 
+from .result import fail, normalize_handler_result
+
 
 @dataclass(slots=True)
 class RequestEnvelope:
@@ -46,11 +48,12 @@ class MainThreadDispatcher:
             envelope = self._queue.popleft()
             try:
                 result = self.handlers.handle(envelope.method, envelope.params)
-                response = {"jsonrpc": "2.0", "result": result, "id": envelope.id}
+                response = {"jsonrpc": "2.0", "result": normalize_handler_result(result), "id": envelope.id}
             except Exception as exc:
+                code = "validation_error" if type(exc).__name__ == "ValidationError" else "handler_exception"
                 response = {
                     "jsonrpc": "2.0",
-                    "error": {"code": -32603, "message": str(exc)},
+                    "result": fail(code, str(exc), {"exception": type(exc).__name__}),
                     "id": envelope.id,
                 }
             self.response_callback(envelope, response)

@@ -7,9 +7,11 @@ import tempfile
 
 import bpy
 
+from ..restricted_exec import RestrictedExecError, execute_restricted
 from ..validation import (
     ValidationError,
     require_param,
+    require_any_param,
     validate_enum,
     validate_filepath,
 )
@@ -42,6 +44,7 @@ class AIHandlersMixin:
     def _handle_ai_generate_model(self, params: dict) -> dict:
         """Generate 3D model via AI (text-to-3D or image-to-3D)."""
         from ..external.ai_models import generate_model, generate_model_from_image
+        require_any_param(params, ["prompt", "image_path"])
 
         # Check if this is image-to-3D or text-to-3D
         image_path = params.get("image_path")
@@ -73,6 +76,7 @@ class AIHandlersMixin:
 
     def _handle_ai_generate_model_sync(self, params: dict) -> dict:
         """Generate 3D model and poll until complete (synchronous)."""
+        require_any_param(params, ["prompt", "image_path"])
         from ..external.ai_models import (
             generate_model,
             generate_model_from_image,
@@ -176,8 +180,8 @@ class AIHandlersMixin:
 
         image_path = require_param(params, "image_path", str)
         mask_path = require_param(params, "mask_path", str)
-        validate_filepath(image_path, must_exist=True)
-        validate_filepath(mask_path, must_exist=True)
+        validate_filepath(image_path, "image_path", must_exist=True)
+        validate_filepath(mask_path, "mask_path", must_exist=True)
 
         return generate_texture(
             prompt=require_param(params, "prompt", str),
@@ -633,64 +637,32 @@ class AIHandlersMixin:
 
 
     def _handle_execute_script(self, params: dict) -> dict:
-        """Execute arbitrary Python script in Blender's context.
-
-        Enables real mesh modeling via bmesh, mathutils, and full Blender API access.
-        """
+        """Execute a conservative AST-validated Blender script fallback."""
         script = require_param(params, "script", str)
-
-        # Push undo so user can Ctrl+Z
-        bpy.ops.ed.undo_push(message="MCP Execute Script")
-
-        # Capture stdout/stderr
-        stdout_capture = io.StringIO()
-        stderr_capture = io.StringIO()
-
-        # Pre-loaded namespace for script execution
-        exec_namespace = {"bpy": bpy, "__builtins__": __builtins__}
-
         try:
-            with contextlib.redirect_stdout(stdout_capture), contextlib.redirect_stderr(stderr_capture):
-                exec(script, exec_namespace)  # noqa: S102
-
-            stdout_str = stdout_capture.getvalue()
-            stderr_str = stderr_capture.getvalue()
-
-            # Cap output at 64KB
-            max_output = 65536
-            if len(stdout_str) > max_output:
-                stdout_str = stdout_str[:max_output] + "\n... (truncated)"
-            if len(stderr_str) > max_output:
-                stderr_str = stderr_str[:max_output] + "\n... (truncated)"
-
-            # Check for a 'result' variable set by the script
-            script_result = exec_namespace.get("result")
-            result_data = None
+            execution = execute_restricted(script, bpy)
+            script_result = execution.get("result")
             if script_result is not None:
                 try:
-                    import json
                     json.dumps(script_result)
-                    result_data = script_result
                 except (TypeError, ValueError):
-                    result_data = str(script_result)
-
+                    script_result = str(script_result)
             return {
                 "success": True,
-                "stdout": stdout_str,
-                "stderr": stderr_str,
+                "stdout": execution.get("stdout", ""),
+                "stderr": execution.get("stderr", ""),
                 "error": None,
-                "result": result_data,
+                "result": script_result,
             }
-
-        except Exception as e:
-            stdout_str = stdout_capture.getvalue()
-            stderr_str = stderr_capture.getvalue()
+        except RestrictedExecError as exc:
             return {
-                "success": False,
-                "stdout": stdout_str,
-                "stderr": stderr_str,
-                "error": f"{type(e).__name__}: {e}",
-                "result": None,
+                "success": False, "stdout": "", "stderr": "",
+                "error": f"RestrictedExecError: {exc}", "result": None,
+            }
+        except Exception as exc:
+            return {
+                "success": False, "stdout": "", "stderr": "",
+                "error": f"{type(exc).__name__}: {exc}", "result": None,
             }
 
     # ========== Multi-Angle Rendering Handler ==========
