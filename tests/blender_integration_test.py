@@ -21,6 +21,9 @@ try:
     import bmesh
     import bpy
 except ImportError:
+    if "pytest" in sys.modules:
+        import pytest
+        pytest.skip("Blender integration tests require Blender Python", allow_module_level=True)
     print("ERROR: This script must be run inside Blender")
     print("Usage: blender --background --python tests/blender_integration_test.py")
     sys.exit(1)
