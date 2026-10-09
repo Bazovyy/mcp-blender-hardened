@@ -144,35 +144,15 @@ def _socket_type_label(socket):
 
 
 def _read_modifier_input(modifier, identifier):
-    """Read a modifier input value, converting Blender types to plain Python."""
-    try:
-        val = modifier[identifier]
-    except KeyError:
-        return None
-    if hasattr(val, "__iter__") and not isinstance(val, (str, bytes)):
-        return [float(v) for v in val]
-    if isinstance(val, (float, int, bool)):
-        return val
-    if val is not None and hasattr(val, "name"):
-        return val.name
-    return str(val) if val is not None else None
+    """Read a Geometry Nodes modifier input using the Blender 5.2 API."""
+    from ..geonodes_52 import get_modifier_input
+    return get_modifier_input(modifier, identifier)
 
 
 def _set_modifier_input(modifier, identifier, value, socket_type):
-    """Set a modifier input value, coercing types as needed."""
-    import bpy
-    if socket_type in ("NodeSocketObject", "NodeSocketCollection", "NodeSocketMaterial", "NodeSocketImage"):
-        coll_map = {
-            "NodeSocketObject": bpy.data.objects,
-            "NodeSocketCollection": bpy.data.collections,
-            "NodeSocketMaterial": bpy.data.materials,
-            "NodeSocketImage": bpy.data.images,
-        }
-        data_coll = coll_map.get(socket_type)
-        if data_coll and isinstance(value, str):
-            modifier[identifier] = data_coll.get(value)
-            return
-    modifier[identifier] = value
+    """Set a Geometry Nodes modifier input using the Blender 5.2 API."""
+    from ..geonodes_52 import set_modifier_input
+    return set_modifier_input(modifier, identifier, value, socket_type)
 
 
 _CLOTH_PRESETS = {

@@ -4,6 +4,7 @@ import math
 
 import bpy
 
+from ..geonodes_52 import iter_interface_sockets
 from ..utils import get_object_or_error
 from ..validation import (
     require_param,
@@ -157,9 +158,8 @@ class GeoNodesHandlersMixin:
         if input_values and isinstance(input_values, dict):
             # Build a name→(identifier, bl_socket_idname) map from the interface
             socket_map: dict[str, tuple[str, str]] = {}
-            for item in group.interface.items_tree:
-                if item.item_type == 'SOCKET' and item.in_out == 'INPUT':
-                    socket_map[item.name] = (item.identifier, item.bl_socket_idname)
+            for item in iter_interface_sockets(group, "INPUT"):
+                socket_map[item.name] = (item.identifier, item.bl_socket_idname)
 
             for inp_name, inp_value in input_values.items():
                 if inp_name not in socket_map:
@@ -169,9 +169,8 @@ class GeoNodesHandlersMixin:
 
         # Read back current state
         result_inputs = {}
-        for item in group.interface.items_tree:
-            if item.item_type == 'SOCKET' and item.in_out == 'INPUT':
-                result_inputs[item.name] = _read_modifier_input(modifier, item.identifier)
+        for item in iter_interface_sockets(group, "INPUT"):
+            result_inputs[item.name] = _read_modifier_input(modifier, item.identifier)
 
         return {
             "success": True,
@@ -254,8 +253,8 @@ class GeoNodesHandlersMixin:
                                      label='Random Scale', location=(-200, -200))
             # Set data type to FLOAT_VECTOR for uniform xyz
             n_rand_scale.data_type = 'FLOAT'
-            n_rand_scale.inputs[2].default_value = scale_min  # Min
-            n_rand_scale.inputs[3].default_value = scale_max  # Max
+            n_rand_scale.inputs['Min'].default_value = scale_min
+            n_rand_scale.inputs['Max'].default_value = scale_max
 
             # Combine XYZ to turn single float into vector scale
             n_combine = _new_node(tree, 'ShaderNodeCombineXYZ',
@@ -282,12 +281,12 @@ class GeoNodesHandlersMixin:
                                        label='Random Rot', location=(-200, -400))
                 n_rand_rot.data_type = 'FLOAT_VECTOR'
                 rot_rads = [math.radians(r) for r in rot_degs]
-                n_rand_rot.inputs[0].default_value = tuple(-r for r in rot_rads)  # Min
-                n_rand_rot.inputs[1].default_value = tuple(rot_rads)  # Max
+                n_rand_rot.inputs['Min'].default_value = tuple(-r for r in rot_rads)
+                n_rand_rot.inputs['Max'].default_value = tuple(rot_rads)
 
                 n_rotate = _new_node(tree, 'FunctionNodeRotateEuler',
                                      label='Add Random Rot', location=(-50, -400))
-                n_rotate.type = 'EULER'
+                n_rotate.rotation_type = 'EULER'
                 _link(tree, n_dist.outputs['Rotation'], n_rotate.inputs['Rotation'])
                 _link(tree, n_rand_rot.outputs['Value'], n_rotate.inputs['Rotate By'])
 
@@ -303,8 +302,8 @@ class GeoNodesHandlersMixin:
                                    label='Random Rot', location=(-200, -400))
             n_rand_rot.data_type = 'FLOAT_VECTOR'
             rot_rads = [math.radians(r) for r in rot_degs]
-            n_rand_rot.inputs[0].default_value = tuple(-r for r in rot_rads)
-            n_rand_rot.inputs[1].default_value = tuple(rot_rads)
+            n_rand_rot.inputs['Min'].default_value = tuple(-r for r in rot_rads)
+            n_rand_rot.inputs['Max'].default_value = tuple(rot_rads)
 
             # Euler to Rotation
             n_euler = _new_node(tree, 'FunctionNodeEulerToRotation',
