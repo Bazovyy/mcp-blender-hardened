@@ -18,6 +18,7 @@ _logger.info("MCP addon loaded - version 0.2.0")
 import bpy
 
 from .socket_server import MCPSocketServer
+from .temp_assets import get_temp_asset_manager
 
 # Global server instance
 _server: MCPSocketServer | None = None
@@ -145,6 +146,7 @@ classes = (
 
 def register():
     """Register addon classes and properties."""
+    get_temp_asset_manager().startup_cleanup()
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Scene.mcp_server_props = bpy.props.PointerProperty(type=MCPServerProperties)

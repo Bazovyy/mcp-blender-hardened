@@ -583,13 +583,13 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="blender_render_screenshot",
-        description="Capture the current viewport as an image",
+        description="Capture the current viewport as an image. Omit output_path for managed temporary output (TTL 600s).",
         input_schema={
             "type": "object",
             "properties": {
-                "output_path": {"type": "string", "description": "Output file path"},
+                "output_path": {"type": "string", "description": "Explicit user-owned output path; omitted creates managed temporary output"},
             },
-            "required": ["output_path"],
+            "required": [],
         },
     ),
     # Export Tools

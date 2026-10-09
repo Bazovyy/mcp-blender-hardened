@@ -2,11 +2,13 @@
 
 import math
 import os
-import tempfile
 
 import bpy
 
 from .. import compat
+from ..context import find_view3d_context
+from ..state_guard import BlenderStateGuard
+from ..temp_assets import get_temp_asset_manager
 from ..utils import get_object_or_error
 from ..validation import (
     require_param,
@@ -83,10 +85,41 @@ class RenderHandlersMixin:
 
 
     def _handle_render_screenshot(self, params: dict) -> dict:
-        """Capture viewport screenshot."""
-        output_path = params["output_path"]
-        bpy.ops.screen.screenshot_area(filepath=output_path)
-        return {"output_path": output_path}
+        """Capture an interactive viewport, or a safe scene render in headless Blender."""
+        manager = get_temp_asset_manager()
+        explicit = bool(params.get("output_path"))
+        if explicit:
+            output_path = validate_filepath(params["output_path"], "output_path")
+            manager.register(output_path, user_owned=True)
+        else:
+            output_path = str(manager.new_path(prefix="viewport_", suffix=".png"))
+        os.makedirs(os.path.dirname(os.path.abspath(output_path)), exist_ok=True)
+
+        override = find_view3d_context()
+        capture_mode = "viewport"
+        if override is not None:
+            with bpy.context.temp_override(**override):
+                bpy.ops.screen.screenshot_area(filepath=output_path)
+        else:
+            scene = bpy.context.scene
+            if scene.camera is None:
+                return {
+                    "success": False, "code": "context_required",
+                    "error": "Headless screenshot fallback requires an active scene camera",
+                }
+            capture_mode = "headless_render"
+            with BlenderStateGuard():
+                scene.render.filepath = output_path
+                scene.render.image_settings.file_format = "PNG"
+                bpy.ops.render.render(write_still=True)
+
+        path = os.path.abspath(output_path)
+        if not explicit:
+            manager.register(path)
+        return {
+            "success": True, "output_path": path, "temporary": not explicit,
+            "capture_mode": capture_mode,
+        }
 
     # ========== Export Handlers ==========
 
@@ -100,10 +133,13 @@ class RenderHandlersMixin:
         resolution = params.get("resolution", [512, 512])
         output_dir = params.get("output_dir")
 
-        if output_dir is None:
-            output_dir = tempfile.mkdtemp(prefix="mcp_render_")
-
-        os.makedirs(output_dir, exist_ok=True)
+        manager = get_temp_asset_manager()
+        temporary_output = output_dir is None
+        if temporary_output:
+            output_dir = str(manager.new_dir(prefix="render_"))
+        else:
+            os.makedirs(output_dir, exist_ok=True)
+            manager.register(output_dir, user_owned=True)
 
         # Find target object
         if object_name:
@@ -217,8 +253,11 @@ class RenderHandlersMixin:
                     if cam_data.name in bpy.data.cameras:
                         bpy.data.cameras.remove(cam_data)
 
+        if temporary_output:
+            manager.register(output_dir)
         return {
-            "success": True, "renders": renders, "output_dir": output_dir, "resolution": resolution,
+            "success": True, "renders": renders, "output_dir": output_dir,
+            "resolution": resolution, "temporary": temporary_output,
         }
 
     # ========== Vision Analysis Handler ==========

@@ -3,11 +3,11 @@
 import contextlib
 import io
 import json
-import tempfile
 
 import bpy
 
 from ..restricted_exec import RestrictedExecError, execute_restricted
+from ..temp_assets import get_temp_asset_manager
 from ..validation import (
     ValidationError,
     require_param,
@@ -227,7 +227,8 @@ class AIHandlersMixin:
         if obj is None:
             return None
         scene = bpy.context.scene
-        output_path = tempfile.mktemp(suffix=".png", prefix=f"control_{control_type}_")
+        manager = get_temp_asset_manager()
+        output_path = str(manager.new_path(suffix=".png", prefix=f"control_{control_type}_"))
         try:
             with BlenderStateGuard():
                 scene.render.engine = "BLENDER_EEVEE"
@@ -242,6 +243,7 @@ class AIHandlersMixin:
                 elif control_type == "normal":
                     bpy.context.view_layer.use_pass_normal = True
                 bpy.ops.render.render(write_still=True)
+            manager.register(output_path)
             return output_path
         except Exception:
             return None
