@@ -79,31 +79,40 @@ class BlenderClient:
             raise BlenderConnectionError(f"Connection failed: {e}")
 
     async def disconnect(self) -> None:
-        """Disconnect from Blender."""
+        """Disconnect from Blender and fail outstanding requests."""
+        await self._shutdown_connection(reason="Disconnected", from_reader=False)
+
+    async def _shutdown_connection(self, *, reason: str, from_reader: bool) -> None:
+        """Tear down transport without ever awaiting the current reader task."""
         self._connected = False
 
-        if self._read_task:
-            self._read_task.cancel()
+        read_task = self._read_task
+        self._read_task = None
+        current_task = asyncio.current_task()
+        if read_task is not None and read_task is not current_task and not from_reader:
+            read_task.cancel()
             try:
-                await self._read_task
+                await read_task
             except asyncio.CancelledError:
                 pass
-            self._read_task = None
 
         if self._writer:
-            self._writer.close()
-            try:
-                await self._writer.wait_closed()
-            except Exception:
-                pass
+            writer = self._writer
             self._writer = None
             self._reader = None
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+        else:
+            self._reader = None
 
-        # Cancel any pending requests
-        for future in self._pending_requests.values():
-            if not future.done():
-                future.set_exception(BlenderConnectionError("Disconnected"))
+        pending = list(self._pending_requests.values())
         self._pending_requests.clear()
+        for future in pending:
+            if not future.done():
+                future.set_exception(BlenderConnectionError(reason))
 
         logger.info("Disconnected from Blender")
 
@@ -181,8 +190,9 @@ class BlenderClient:
                 data = await self._reader.read(65536)
                 if not data:
                     # Connection closed
-                    logger.warning("Connection closed by Blender")
-                    await self.disconnect()
+                    reason = "Connection closed by Blender"
+                    logger.warning(reason)
+                    await self._shutdown_connection(reason=reason, from_reader=True)
                     break
 
                 buffer += data
@@ -196,8 +206,9 @@ class BlenderClient:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"Read error: {e}")
-                await self.disconnect()
+                reason = f"Read error: {e}"
+                logger.error(reason)
+                await self._shutdown_connection(reason=reason, from_reader=True)
                 break
 
     async def _handle_response(self, data: bytes) -> None:
