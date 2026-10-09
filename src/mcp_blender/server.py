@@ -102,6 +102,21 @@ TOOLS: list[Tool] = [
             "required": [],
         },
     ),
+    Tool(
+        name="blender_job_status",
+        description="Get status/result for a nonblocking Blender runtime job",
+        input_schema={"type":"object","properties":{"job_id":{"type":"string"}},"required":["job_id"]},
+    ),
+    Tool(
+        name="blender_job_cancel",
+        description="Cancel a nonblocking Blender runtime job",
+        input_schema={"type":"object","properties":{"job_id":{"type":"string"}},"required":["job_id"]},
+    ),
+    Tool(
+        name="blender_job_list",
+        description="List Blender runtime jobs, optionally filtered by status",
+        input_schema={"type":"object","properties":{"status":{"type":"string","enum":["pending","running","completed","failed","cancelled","timeout"]}},"required":[]},
+    ),
     # Object Tools
     Tool(
         name="blender_object_create",
@@ -794,7 +809,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="blender_ai_generate_model_sync",
-        description="Generate a 3D model and wait for completion (synchronous). Combines generate + poll + optional import in one call. Returns the final model when done.",
+        description="Start 3D model generation and submit nonblocking status polling. Returns a runtime job_id immediately; use blender_job_status/cancel.",
         input_schema={
             "type": "object",
             "properties": {
@@ -877,7 +892,7 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="blender_ai_generate_texture_sync",
-        description="Generate PBR texture and wait for completion (synchronous). Returns texture file paths when done.",
+        description="Start PBR texture generation and submit nonblocking status polling. Returns a runtime job_id immediately; use blender_job_status/cancel.",
         input_schema={
             "type": "object",
             "properties": {
@@ -5948,7 +5963,7 @@ def create_server(host: str, port: int) -> Server:
             command = name.replace("blender_", "")
             # Extract timeout from arguments, or use longer defaults
             # for known long-running commands
-            timeout = arguments.pop("timeout", None) if isinstance(arguments, dict) else None
+            timeout = arguments.pop("_mcp_timeout", None)
             if timeout is None:
                 _long_running = {
                     "ai_pipeline_generate", "ai_generate_model_sync",

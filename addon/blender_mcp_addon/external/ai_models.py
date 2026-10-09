@@ -495,39 +495,48 @@ def poll_until_complete(
     auto_import: bool = True,
     backend: str | None = None,
 ) -> dict[str, Any]:
-    """Poll a job until it completes or times out.
+    """Submit nonblocking provider polling to the Blender job runtime.
 
-    Args:
-        job_id: The job ID to poll.
-        max_wait: Maximum time to wait in seconds.
-        poll_interval: Time between polls in seconds.
-        auto_import: Whether to auto-import when complete.
-        backend: Optional backend hint.
-
-    Returns:
-        Final status dictionary.
+    The historical implementation slept in Blender's main thread. The hardened
+    runtime performs at most one status check per scheduled job step and returns
+    immediately with a runtime job id.
     """
-    start_time = time.time()
+    from ..jobs import JobStep, submit_job
 
-    while True:
-        elapsed = time.time() - start_time
-        if elapsed >= max_wait:
-            return {
-                "success": False,
-                "job_id": job_id,
-                "status": "timeout",
-                "error": f"Timed out after {max_wait} seconds",
-                "elapsed_seconds": elapsed,
-            }
+    provider_job_id = job_id
 
-        result = check_status(job_id, auto_import=auto_import, backend=backend)
+    def step(_runtime_job):
+        result = check_status(
+            provider_job_id, auto_import=auto_import, backend=backend
+        )
+        status = str(result.get("status", "unknown")).lower()
+        progress = result.get("progress")
+        if status in {"completed", "failed", "error", "cancelled"}:
+            if status == "completed" and result.get("success", True):
+                return JobStep(done=True, result=result, progress=1.0)
+            return JobStep(
+                done=True, result=result,
+                error=str(result.get("error") or f"Provider job ended with status {status}"),
+            )
+        return JobStep(progress=progress, delay_seconds=max(0.0, float(poll_interval)))
 
-        status = result.get("status", "unknown")
-        if status in ("completed", "failed", "error", "cancelled"):
-            result["elapsed_seconds"] = elapsed
-            return result
-
-        time.sleep(poll_interval)
+    runtime_job_id = submit_job(
+        "ai_provider_poll", step,
+        metadata={
+            "provider_job_id": provider_job_id,
+            "backend": backend,
+            "auto_import": auto_import,
+        },
+        timeout_seconds=max_wait,
+    )
+    return {
+        "success": True,
+        "status": "submitted",
+        "job_id": runtime_job_id,
+        "provider_job_id": provider_job_id,
+        "poll_interval": poll_interval,
+        "max_wait": max_wait,
+    }
 
 
 # =============================================================================

@@ -43,7 +43,7 @@ class TestToolDefinitions:
 
     def test_tool_count(self):
         """Verify expected number of tools."""
-        # 155 base + 63 new tools:
+        # 155 base + 63 legacy additions + 3 hardened runtime job tools:
         # 7 materials + 7 measurement + 8 collections/system + 6 baking
         # + 7 geonode + 8 sculpting + 8 rigging + 6 physics + 6 annotation
         # + 3 text objects (text_create, text_set_properties, text_to_mesh)
@@ -52,7 +52,7 @@ class TestToolDefinitions:
         # + 2 workflow/server utilities (text_add_relief, server_restart)
         # + 2 relief-workflow generalization tools (mesh_add_relief,
         #   mesh_bake_heightmap) added for the ERMENEK SVG-import relief task
-        assert len(TOOLS) == 229, f"Expected 229 tools, got {len(TOOLS)}"
+        assert len(TOOLS) == 232, f"Expected 232 tools, got {len(TOOLS)}"
 
 
 class TestServerCreation:

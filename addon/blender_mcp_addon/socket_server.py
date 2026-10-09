@@ -12,6 +12,7 @@ from typing import Any
 import bpy
 
 from .handlers import CommandHandlers
+from .jobs import tick_jobs
 from .runtime import MainThreadDispatcher, RequestEnvelope
 
 
@@ -135,6 +136,7 @@ class MCPSocketServer:
             self._accept_clients()
             self._process_clients()
             self.dispatcher.tick(max_items=8, time_budget_ms=8.0)
+            tick_jobs(max_jobs=4, time_budget_ms=4.0)
             self._flush_clients()
             if self._restart_requested and all(not state.send_buffer for state in self.clients.values()):
                 self._restart_listener()

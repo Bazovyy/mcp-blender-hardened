@@ -17,6 +17,7 @@ from .baking import BakingHandlersMixin
 from .collections import CollectionHandlersMixin
 from .export_import import ExportImportHandlersMixin
 from .geonodes import GeoNodesHandlersMixin
+from .jobs import JobHandlersMixin
 from .materials import MaterialHandlersMixin
 from .measurement import MeasurementHandlersMixin
 from .mesh_editing import MeshEditingHandlersMixin
@@ -32,6 +33,7 @@ from .text_objects import TextObjectHandlersMixin
 
 class CommandHandlers(
     SceneHandlersMixin,
+    JobHandlersMixin,
     ObjectHandlersMixin,
     MaterialHandlersMixin,
     ModifierHandlersMixin,
@@ -67,6 +69,9 @@ class CommandHandlers(
         self._handlers["scene_set_frame_range"] = self._handle_scene_set_frame_range
         self._handlers["get_version"] = self._handle_get_version
         self._handlers["server_restart"] = self._handle_server_restart
+        self._handlers["job_status"] = self._handle_job_status
+        self._handlers["job_cancel"] = self._handle_job_cancel
+        self._handlers["job_list"] = self._handle_job_list
 
         # Object handlers
         self._handlers["object_create"] = self._handle_object_create
