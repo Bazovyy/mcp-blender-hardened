@@ -71,7 +71,8 @@ class TestToolSchemas:
         assert "enum" in schema["properties"]["engine"]
         engines = schema["properties"]["engine"]["enum"]
         assert "CYCLES" in engines
-        assert "BLENDER_EEVEE_NEXT" in engines
+        assert "BLENDER_EEVEE" in engines
+        assert "BLENDER_EEVEE_NEXT" not in engines
 
     def test_export_gltf_schema(self):
         """Test export_gltf tool schema."""

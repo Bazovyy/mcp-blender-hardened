@@ -546,7 +546,7 @@ TOOLS: list[Tool] = [
             "properties": {
                 "engine": {
                     "type": "string",
-                    "enum": ["CYCLES", "BLENDER_EEVEE_NEXT", "BLENDER_WORKBENCH", "EEVEE"],
+                    "enum": ["CYCLES", "BLENDER_EEVEE", "BLENDER_WORKBENCH", "EEVEE"],
                     "description": "Render engine",
                 },
             },

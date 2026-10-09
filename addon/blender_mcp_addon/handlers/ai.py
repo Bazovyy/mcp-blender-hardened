@@ -220,49 +220,31 @@ class AIHandlersMixin:
 
 
     def _render_control_image(self, object_name: str, control_type: str) -> str | None:
-        """Render a depth or normal pass of an object for ControlNet input."""
+        """Render a Blender 5.2 control image without leaking scene render state."""
+        from ..state_guard import BlenderStateGuard
+
         obj = bpy.data.objects.get(object_name)
-        if not obj:
+        if obj is None:
             return None
-
         scene = bpy.context.scene
-        render = scene.render
-
-        # Save current settings
-        old_engine = render.engine
-        old_film = render.film_transparent
-        old_filepath = render.filepath
-        old_res_x = render.resolution_x
-        old_res_y = render.resolution_y
-
+        output_path = tempfile.mktemp(suffix=".png", prefix=f"control_{control_type}_")
         try:
-            render.engine = "BLENDER_EEVEE_NEXT"
-            render.film_transparent = True
-            render.resolution_x = 1024
-            render.resolution_y = 1024
-
-            output_path = tempfile.mktemp(suffix=".png", prefix=f"control_{control_type}_")
-            render.filepath = output_path
-
-            # Enable the appropriate render pass via view layer
-            scene.use_nodes = True
-            view_layer = bpy.context.view_layer
-            if control_type == "depth":
-                view_layer.use_pass_z = True
-            elif control_type == "normal":
-                view_layer.use_pass_normal = True
-
-            bpy.ops.render.render(write_still=True)
+            with BlenderStateGuard():
+                scene.render.engine = "BLENDER_EEVEE"
+                scene.render.film_transparent = True
+                scene.render.resolution_x = 1024
+                scene.render.resolution_y = 1024
+                scene.render.resolution_percentage = 100
+                scene.render.image_settings.file_format = "PNG"
+                scene.render.filepath = output_path
+                if control_type == "depth":
+                    bpy.context.view_layer.use_pass_z = True
+                elif control_type == "normal":
+                    bpy.context.view_layer.use_pass_normal = True
+                bpy.ops.render.render(write_still=True)
             return output_path
-
         except Exception:
             return None
-        finally:
-            render.engine = old_engine
-            render.film_transparent = old_film
-            render.filepath = old_filepath
-            render.resolution_x = old_res_x
-            render.resolution_y = old_res_y
 
     # ========== New AI Backend Management Handlers ==========
 

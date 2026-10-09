@@ -19,71 +19,35 @@ class AnnotationHandlersMixin:
     """Mixin for annotation and grease pencil handlers."""
 
     def _handle_annotation_add(self, params: dict) -> dict:
-        """Add 3D annotation strokes to an annotation layer."""
+        """Add a 3D stroke to Blender 5.2's Annotation datablock."""
         points = require_param(params, "points", list)
-        color = params.get("color", [1, 0, 0, 1])
+        color = validate_color(params.get("color", [1, 0, 0, 1]), "color")
         thickness = int(params.get("thickness", 3))
         layer_name = params.get("layer_name", "Annotations")
-
         if len(points) < 2:
-            return {"error": "At least 2 points are required for a stroke"}
-
-        # Validate color
-        color = validate_color(color, "color")
-
-        # Validate points
-        validated_points = []
-        for i, pt in enumerate(points):
-            validated_points.append(validate_vector3(pt, f"points[{i}]"))
-
-        # Get or create annotation grease pencil data
+            return {"success": False, "error": "At least 2 points are required for a stroke"}
+        validated = [validate_vector3(pt, f"points[{i}]") for i, pt in enumerate(points)]
         scene = bpy.context.scene
-        gpd = scene.grease_pencil
-        if gpd is None:
-            gpd = bpy.data.grease_pencils.new("Annotations")
-            scene.grease_pencil = gpd
-
-        # Get or create the layer
-        gpl = gpd.layers.get(layer_name)
-        if gpl is None:
-            gpl = gpd.layers.new(layer_name, set_active=True)
-
-        # Set layer color
-        gpl.color = (color[0], color[1], color[2])
-
-        # Set annotation line thickness on the layer
-        gpl.thickness = thickness
-
-        # Get or create a frame at the current frame
-        current_frame = bpy.context.scene.frame_current
-        gpf = None
-        for frame in gpl.frames:
-            if frame.frame_number == current_frame:
-                gpf = frame
-                break
-        if gpf is None:
-            gpf = gpl.frames.new(current_frame)
-
-        # Create the stroke
-        stroke = gpf.strokes.new()
-        stroke.display_mode = '3DSPACE'
-        stroke.line_width = thickness
-
-        # Add points to the stroke
-        stroke.points.add(len(validated_points))
-        for i, pt in enumerate(validated_points):
-            stroke.points[i].co = (pt[0], pt[1], pt[2])
-            stroke.points[i].pressure = 1.0
-            stroke.points[i].strength = color[3]
-
-        return {
-            "success": True,
-            "layer": layer_name,
-            "stroke_points": len(validated_points),
-            "color": color,
-            "thickness": thickness,
-            "frame": current_frame,
-        }
+        annotation = scene.annotation
+        if annotation is None:
+            annotation = bpy.data.annotations.new("Annotations")
+            scene.annotation = annotation
+        layer = annotation.layers.get(layer_name)
+        if layer is None:
+            layer = annotation.layers.new(layer_name, set_active=True)
+        layer.color = (color[0], color[1], color[2])
+        layer.thickness = thickness
+        frame_number = scene.frame_current
+        frame = next((frame for frame in layer.frames if frame.frame_number == frame_number), None)
+        if frame is None:
+            frame = layer.frames.new(frame_number)
+        stroke = frame.strokes.new()
+        stroke.display_mode = "3DSPACE"
+        stroke.points.add(len(validated))
+        for point, co in zip(stroke.points, validated):
+            point.co = tuple(co)
+        return {"success": True, "layer": layer_name, "stroke_points": len(validated),
+                "color": color, "thickness": thickness, "frame": frame_number}
 
 
     def _handle_annotation_text(self, params: dict) -> dict:
@@ -306,117 +270,65 @@ class AnnotationHandlersMixin:
 
 
     def _handle_annotation_clear(self, params: dict) -> dict:
-        """Clear annotation layers."""
+        """Clear Blender 5.2 annotation layers."""
         layer_name = params.get("layer_name")
-
-        scene = bpy.context.scene
-        gpd = scene.grease_pencil
-
-        if gpd is None:
-            return {
-                "success": True,
-                "message": "No annotations found to clear",
-                "layers_removed": 0,
-            }
-
-        removed_layers = []
-
+        annotation = bpy.context.scene.annotation
+        if annotation is None:
+            return {"success": True, "message": "No annotations found to clear", "layers_removed": 0}
+        removed = []
         if layer_name:
-            # Remove a specific layer
-            gpl = gpd.layers.get(layer_name)
-            if gpl is None:
-                available = [layer.info for layer in gpd.layers]
-                return {
-                    "error": f"Annotation layer '{layer_name}' not found. "
-                    f"Available layers: {available}"
-                }
-            removed_layers.append(gpl.info)
-            gpd.layers.remove(gpl)
+            layer = annotation.layers.get(layer_name)
+            if layer is None:
+                available = [layer.info for layer in annotation.layers]
+                return {"success": False, "error": f"Annotation layer '{layer_name}' not found. Available layers: {available}"}
+            removed.append(layer.info)
+            annotation.layers.remove(layer)
         else:
-            # Remove all layers
-            for gpl in list(gpd.layers):
-                removed_layers.append(gpl.info)
-                gpd.layers.remove(gpl)
-
-        return {
-            "success": True,
-            "layers_removed": len(removed_layers),
-            "removed": removed_layers,
-        }
+            for layer in list(annotation.layers):
+                removed.append(layer.info)
+                annotation.layers.remove(layer)
+        return {"success": True, "layers_removed": len(removed), "removed": removed}
 
 
     def _handle_grease_pencil_create(self, params: dict) -> dict:
-        """Create a grease pencil object with strokes."""
+        """Create a Blender 5.2 Grease Pencil object from explicit strokes."""
         name = params.get("name", "GPencil")
         strokes_data = require_param(params, "strokes", list)
-        color = params.get("color", [0, 0, 0, 1])
-
-        color = validate_color(color, "color")
-
-        if len(strokes_data) == 0:
-            return {"error": "At least one stroke is required"}
-
-        # Create new grease pencil data
-        gpd = bpy.data.grease_pencils.new(name)
-
-        # Create layer
-        gpl = gpd.layers.new("Layer", set_active=True)
-        gpl.color = (color[0], color[1], color[2])
-
-        # Create frame at current frame
-        current_frame = bpy.context.scene.frame_current
-        gpf = gpl.frames.new(current_frame)
-
+        color = validate_color(params.get("color", [0, 0, 0, 1]), "color")
+        if not strokes_data:
+            return {"success": False, "error": "At least one stroke is required"}
+        gp_data = bpy.data.grease_pencils.new(name)
+        layer = gp_data.layers.new("Layer", set_active=True)
+        frame_number = bpy.context.scene.frame_current
+        frame = layer.frames.new(frame_number)
+        drawing = frame.drawing
         stroke_count = 0
         total_points = 0
-
-        for s_idx, stroke_def in enumerate(strokes_data):
-            pts = stroke_def.get("points", [])
-            stroke_thickness = int(stroke_def.get("thickness", 10))
-
-            if len(pts) < 2:
+        for s_idx, definition in enumerate(strokes_data):
+            raw_points = definition.get("points", [])
+            if len(raw_points) < 2:
                 continue
-
-            # Validate points
-            validated_pts = []
-            for i, pt in enumerate(pts):
-                validated_pts.append(
-                    validate_vector3(pt, f"strokes[{s_idx}].points[{i}]")
-                )
-
-            # Create the stroke
-            stroke = gpf.strokes.new()
-            stroke.display_mode = '3DSPACE'
-            stroke.line_width = stroke_thickness
-
-            stroke.points.add(len(validated_pts))
-            for i, pt in enumerate(validated_pts):
-                stroke.points[i].co = (pt[0], pt[1], pt[2])
-                stroke.points[i].pressure = 1.0
-                stroke.points[i].strength = 1.0
-
+            points = [validate_vector3(pt, f"strokes[{s_idx}].points[{i}]") for i, pt in enumerate(raw_points)]
+            thickness = max(1.0, float(definition.get("thickness", 10)))
+            drawing.add_strokes([len(points)])
+            stroke = drawing.strokes[-1]
+            for gp_point, co in zip(stroke.points, points):
+                gp_point.position = tuple(co)
+                gp_point.radius = thickness
+                gp_point.opacity = 1.0
             stroke_count += 1
-            total_points += len(validated_pts)
-
-        # Create the grease pencil object and link to scene
-        gp_obj = bpy.data.objects.new(name, gpd)
+            total_points += len(points)
+        if stroke_count == 0:
+            bpy.data.grease_pencils.remove(gp_data)
+            return {"success": False, "error": "No stroke contained at least 2 valid points"}
+        gp_obj = bpy.data.objects.new(name, gp_data)
         bpy.context.collection.objects.link(gp_obj)
-
-        # Create a material for the grease pencil
-        gp_mat = bpy.data.materials.new(name=f"{name}_Material")
-        bpy.data.materials.create_gpencil_data(gp_mat)
-        gp_mat.grease_pencil.color = (color[0], color[1], color[2], color[3])
-        gpd.materials.append(gp_mat)
-
-        return {
-            "success": True,
-            "object": gp_obj.name,
-            "strokes_created": stroke_count,
-            "total_points": total_points,
-            "color": color,
-            "layer": gpl.info,
-            "frame": current_frame,
-        }
+        material = bpy.data.materials.new(name=f"{name}_Material")
+        bpy.data.materials.create_gpencil_data(material)
+        material.grease_pencil.color = tuple(color)
+        gp_data.materials.append(material)
+        return {"success": True, "object": gp_obj.name, "strokes_created": stroke_count,
+                "total_points": total_points, "color": color, "layer": layer.name, "frame": frame_number}
 
 
     def _handle_grease_pencil_markup(self, params: dict) -> dict:

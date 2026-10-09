@@ -61,10 +61,10 @@ class RenderHandlersMixin:
         """Set render engine."""
         engine = params["engine"].upper()
 
-        # Handle EEVEE naming across versions
-        if engine in ("EEVEE", "BLENDER_EEVEE"):
-            engine = compat.get_eevee_engine_name()
-
+        # Blender 5.2 uses BLENDER_EEVEE; accept old aliases without exposing them in schema.
+        if engine in ("EEVEE", "BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
+            engine = "BLENDER_EEVEE"
+        engine = validate_enum(engine, "engine", ["BLENDER_EEVEE", "BLENDER_WORKBENCH", "CYCLES"])
         bpy.context.scene.render.engine = engine
         return {"engine": bpy.context.scene.render.engine}
 
@@ -171,80 +171,54 @@ class RenderHandlersMixin:
             },
         }
 
-        # Store original render settings
+        from ..state_guard import BlenderStateGuard
+
         scene = bpy.context.scene
-        orig_engine = scene.render.engine
-        orig_res_x = scene.render.resolution_x
-        orig_res_y = scene.render.resolution_y
-        orig_percentage = scene.render.resolution_percentage
-        orig_camera = scene.camera
-
-        # Use Workbench for speed
-        scene.render.engine = "BLENDER_WORKBENCH"
-        scene.render.resolution_x = resolution[0]
-        scene.render.resolution_y = resolution[1]
-        scene.render.resolution_percentage = 100
-        scene.display.shading.light = "STUDIO"
-        scene.display.shading.color_type = "MATERIAL"
-
         renders = {}
         temp_objects = []
+        with BlenderStateGuard():
+            try:
+                scene.render.engine = "BLENDER_WORKBENCH"
+                scene.render.resolution_x = int(resolution[0])
+                scene.render.resolution_y = int(resolution[1])
+                scene.render.resolution_percentage = 100
+                scene.display.shading.light = "STUDIO"
+                scene.display.shading.color_type = "MATERIAL"
 
-        try:
-            for angle_name in angles:
-                config = angle_configs.get(angle_name)
-                if not config:
-                    continue
-
-                # Create temporary camera
-                cam_data = bpy.data.cameras.new(f"_mcp_temp_cam_{angle_name}")
-                cam_obj = bpy.data.objects.new(f"_mcp_temp_cam_{angle_name}", cam_data)
-                bpy.context.collection.objects.link(cam_obj)
-                temp_objects.append(cam_obj)
-
-                cam_obj.location = config["location"]
-
-                if config["ortho"]:
-                    cam_data.type = "ORTHO"
-                    cam_data.ortho_scale = max(bbox_size.x, bbox_size.y, bbox_size.z) * 1.3
-                    cam_obj.rotation_euler = config["rotation"]
-                else:
-                    cam_data.type = "PERSP"
-                    cam_data.lens = 50
-                    # Point camera at center
-                    direction = center - cam_obj.location
-                    rot_quat = direction.to_track_quat("-Z", "Y")
-                    cam_obj.rotation_euler = rot_quat.to_euler()
-
-                scene.camera = cam_obj
-
-                # Render
-                filepath = os.path.join(output_dir, f"{angle_name}.png")
-                scene.render.filepath = filepath
-                scene.render.image_settings.file_format = "PNG"
-                bpy.ops.render.render(write_still=True)
-
-                renders[angle_name] = filepath
-
-        finally:
-            # Clean up temp cameras
-            for temp_obj in temp_objects:
-                cam_data = temp_obj.data
-                bpy.data.objects.remove(temp_obj, do_unlink=True)
-                bpy.data.cameras.remove(cam_data)
-
-            # Restore original settings
-            scene.render.engine = orig_engine
-            scene.render.resolution_x = orig_res_x
-            scene.render.resolution_y = orig_res_y
-            scene.render.resolution_percentage = orig_percentage
-            scene.camera = orig_camera
+                for angle_name in angles:
+                    config = angle_configs.get(angle_name)
+                    if not config:
+                        continue
+                    cam_data = bpy.data.cameras.new(f"_mcp_temp_cam_{angle_name}")
+                    cam_obj = bpy.data.objects.new(f"_mcp_temp_cam_{angle_name}", cam_data)
+                    bpy.context.collection.objects.link(cam_obj)
+                    temp_objects.append(cam_obj)
+                    cam_obj.location = config["location"]
+                    if config["ortho"]:
+                        cam_data.type = "ORTHO"
+                        cam_data.ortho_scale = max(bbox_size.x, bbox_size.y, bbox_size.z) * 1.3
+                        cam_obj.rotation_euler = config["rotation"]
+                    else:
+                        cam_data.type = "PERSP"
+                        cam_data.lens = 50
+                        direction = center - cam_obj.location
+                        cam_obj.rotation_euler = direction.to_track_quat("-Z", "Y").to_euler()
+                    scene.camera = cam_obj
+                    filepath = os.path.join(output_dir, f"{angle_name}.png")
+                    scene.render.filepath = filepath
+                    scene.render.image_settings.file_format = "PNG"
+                    bpy.ops.render.render(write_still=True)
+                    renders[angle_name] = filepath
+            finally:
+                for temp_obj in temp_objects:
+                    cam_data = temp_obj.data
+                    if temp_obj.name in bpy.data.objects:
+                        bpy.data.objects.remove(temp_obj, do_unlink=True)
+                    if cam_data.name in bpy.data.cameras:
+                        bpy.data.cameras.remove(cam_data)
 
         return {
-            "success": True,
-            "renders": renders,
-            "output_dir": output_dir,
-            "resolution": resolution,
+            "success": True, "renders": renders, "output_dir": output_dir, "resolution": resolution,
         }
 
     # ========== Vision Analysis Handler ==========

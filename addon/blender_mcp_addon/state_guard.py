@@ -28,6 +28,15 @@ class BlenderStateSnapshot:
     render_filepath: str
     render_format: str
     render_engine: str | None
+    render_resolution_x: int | None
+    render_resolution_y: int | None
+    render_resolution_percentage: int | None
+    render_film_transparent: bool | None
+    shading_light: str | None
+    shading_color_type: str | None
+    compositing_node_group: Any
+    use_pass_z: bool | None
+    use_pass_normal: bool | None
     use_snap: bool | None
     use_transform_data_origin: bool | None
     mesh_select_mode: tuple[bool, ...] | None
@@ -40,6 +49,9 @@ class BlenderStateSnapshot:
         active = context.view_layer.objects.active
         tool = getattr(scene, "tool_settings", None)
         image_settings = scene.render.image_settings
+        display = getattr(scene, "display", None)
+        shading = getattr(display, "shading", None)
+        view_layer = getattr(context, "view_layer", None)
         return cls(
             active_object=getattr(active, "name", None),
             selected_objects=tuple(obj.name for obj in getattr(context, "selected_objects", ())),
@@ -49,6 +61,15 @@ class BlenderStateSnapshot:
             render_filepath=str(scene.render.filepath),
             render_format=str(image_settings.file_format),
             render_engine=getattr(scene.render, "engine", None),
+            render_resolution_x=getattr(scene.render, "resolution_x", None),
+            render_resolution_y=getattr(scene.render, "resolution_y", None),
+            render_resolution_percentage=getattr(scene.render, "resolution_percentage", None),
+            render_film_transparent=getattr(scene.render, "film_transparent", None),
+            shading_light=getattr(shading, "light", None),
+            shading_color_type=getattr(shading, "color_type", None),
+            compositing_node_group=getattr(scene, "compositing_node_group", None),
+            use_pass_z=getattr(view_layer, "use_pass_z", None),
+            use_pass_normal=getattr(view_layer, "use_pass_normal", None),
             use_snap=getattr(tool, "use_snap", None),
             use_transform_data_origin=getattr(tool, "use_transform_data_origin", None),
             mesh_select_mode=tuple(tool.mesh_select_mode) if tool is not None and hasattr(tool, "mesh_select_mode") else None,
@@ -89,6 +110,29 @@ class BlenderStateSnapshot:
         scene.render.image_settings.file_format = self.render_format
         if self.render_engine is not None:
             scene.render.engine = self.render_engine
+        if self.render_resolution_x is not None:
+            scene.render.resolution_x = self.render_resolution_x
+        if self.render_resolution_y is not None:
+            scene.render.resolution_y = self.render_resolution_y
+        if self.render_resolution_percentage is not None:
+            scene.render.resolution_percentage = self.render_resolution_percentage
+        if self.render_film_transparent is not None:
+            scene.render.film_transparent = self.render_film_transparent
+        display = getattr(scene, "display", None)
+        shading = getattr(display, "shading", None)
+        if shading is not None:
+            if self.shading_light is not None:
+                shading.light = self.shading_light
+            if self.shading_color_type is not None:
+                shading.color_type = self.shading_color_type
+        if hasattr(scene, "compositing_node_group"):
+            scene.compositing_node_group = self.compositing_node_group
+        view_layer = getattr(context, "view_layer", None)
+        if view_layer is not None:
+            if self.use_pass_z is not None and hasattr(view_layer, "use_pass_z"):
+                view_layer.use_pass_z = self.use_pass_z
+            if self.use_pass_normal is not None and hasattr(view_layer, "use_pass_normal"):
+                view_layer.use_pass_normal = self.use_pass_normal
 
         tool = getattr(scene, "tool_settings", None)
         if tool is not None:

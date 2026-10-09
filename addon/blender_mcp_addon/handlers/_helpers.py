@@ -341,60 +341,138 @@ def _markup_with_pillow(render_path, annotations, output_path, Image, ImageDraw,
 
 
 def _markup_with_compositor(render_path, annotations, output_path):
-    """Fallback: use Blender's compositor to overlay annotations.
+    """Blender 5.2 fallback: rasterize simple markup, then output through compositor."""
+    from ..state_guard import BlenderStateGuard
 
-    This is a simplified fallback that loads the image, creates a GP overlay
-    annotation in 2D screen space, and re-renders the composite.
-    """
-    # Load the image into Blender
-    img = bpy.data.images.load(render_path)
-    width, height = img.size[0], img.size[1]
+    if any(ann.get("type", "").lower() == "text" for ann in annotations):
+        return {
+            "success": False,
+            "code": "pillow_required_for_text",
+            "error": "Text markup requires Pillow; Blender fallback supports arrow/circle/rectangle.",
+        }
 
-    # Set up compositor
-    scene = bpy.context.scene
-    scene.use_nodes = True
-    tree = scene.node_tree
-    tree.nodes.clear()
-
-    # Create nodes
-    image_node = tree.nodes.new('CompositorNodeImage')
-    image_node.image = img
-    image_node.location = (0, 0)
-
-    composite_node = tree.nodes.new('CompositorNodeComposite')
-    composite_node.location = (400, 0)
-
-    # Connect image to composite output
-    tree.links.new(image_node.outputs[0], composite_node.inputs[0])
-
-    # Set render resolution to match image
-    scene.render.resolution_x = width
-    scene.render.resolution_y = height
-    scene.render.resolution_percentage = 100
-    scene.render.filepath = output_path
-
-    # Set file format based on extension
-    ext = os.path.splitext(output_path)[1].lower()
-    if ext in ('.jpg', '.jpeg'):
-        scene.render.image_settings.file_format = 'JPEG'
-    else:
-        scene.render.image_settings.file_format = 'PNG'
-
-    # Render composite
-    bpy.ops.render.render(write_still=True)
-
-    # Clean up
-    bpy.data.images.remove(img)
-
-    return {
-        "success": True,
-        "output_path": output_path,
-        "annotations_drawn": 0,
-        "image_size": [width, height],
-        "method": "compositor_fallback",
-        "note": "Compositor fallback does not draw markup annotations directly. "
-        "Install Pillow (pip install Pillow) in Blender's Python for full annotation support.",
+    colors = {
+        "red": (1.0, 0.0, 0.0, 1.0), "green": (0.0, 1.0, 0.0, 1.0),
+        "blue": (0.0, 0.0, 1.0, 1.0), "yellow": (1.0, 1.0, 0.0, 1.0),
+        "white": (1.0, 1.0, 1.0, 1.0), "black": (0.0, 0.0, 0.0, 1.0),
+        "orange": (1.0, 0.5, 0.0, 1.0),
     }
+
+    def color_value(value):
+        if isinstance(value, str):
+            low = value.lower()
+            if low in colors:
+                return colors[low]
+            if low.startswith("#") and len(low) in (7, 9):
+                raw = low[1:]
+                if len(raw) == 6:
+                    raw += "ff"
+                return tuple(int(raw[i:i + 2], 16) / 255.0 for i in range(0, 8, 2))
+        if isinstance(value, (list, tuple)) and len(value) in (3, 4):
+            vals = [float(v) for v in value]
+            if any(v > 1.0 for v in vals):
+                vals = [v / 255.0 for v in vals]
+            if len(vals) == 3:
+                vals.append(1.0)
+            return tuple(max(0.0, min(1.0, v)) for v in vals)
+        return colors["red"]
+
+    source = bpy.data.images.load(render_path, check_existing=False)
+    work = source.copy()
+    work.name = "_mcp_markup_work"
+    width, height = int(work.size[0]), int(work.size[1])
+    pixels = list(work.pixels[:])
+
+    def put(x, y, rgba, thickness=1):
+        radius = max(0, int(thickness) // 2)
+        for oy in range(-radius, radius + 1):
+            for ox in range(-radius, radius + 1):
+                px, py = int(x + ox), int(y + oy)
+                if px < 0 or py < 0 or px >= width or py >= height:
+                    continue
+                py = height - 1 - py
+                idx = (py * width + px) * 4
+                alpha = rgba[3]
+                for channel in range(3):
+                    pixels[idx + channel] = rgba[channel] * alpha + pixels[idx + channel] * (1.0 - alpha)
+                pixels[idx + 3] = max(pixels[idx + 3], alpha)
+
+    def line(a, b, rgba, thickness):
+        x0, y0 = int(a[0]), int(a[1]); x1, y1 = int(b[0]), int(b[1])
+        dx = abs(x1 - x0); sx = 1 if x0 < x1 else -1
+        dy = -abs(y1 - y0); sy = 1 if y0 < y1 else -1
+        err = dx + dy
+        while True:
+            put(x0, y0, rgba, thickness)
+            if x0 == x1 and y0 == y1:
+                break
+            e2 = 2 * err
+            if e2 >= dy:
+                err += dy; x0 += sx
+            if e2 <= dx:
+                err += dx; y0 += sy
+
+    drawn = 0
+    for ann in annotations:
+        kind = ann.get("type", "").lower()
+        rgba = color_value(ann.get("color", "red"))
+        thickness = max(1, int(ann.get("thickness", 3)))
+        if kind == "rectangle" and ann.get("start") and ann.get("end"):
+            x0, y0 = ann["start"]; x1, y1 = ann["end"]
+            line((x0, y0), (x1, y0), rgba, thickness); line((x1, y0), (x1, y1), rgba, thickness)
+            line((x1, y1), (x0, y1), rgba, thickness); line((x0, y1), (x0, y0), rgba, thickness)
+            drawn += 1
+        elif kind == "circle" and ann.get("center") and ann.get("radius") is not None:
+            cx, cy = ann["center"]; radius = max(1, int(ann["radius"])); steps = max(24, int(2 * math.pi * radius))
+            previous = (cx + radius, cy)
+            for i in range(1, steps + 1):
+                angle = 2 * math.pi * i / steps; current = (cx + radius * math.cos(angle), cy + radius * math.sin(angle))
+                line(previous, current, rgba, thickness); previous = current
+            drawn += 1
+        elif kind == "arrow" and ann.get("start") and ann.get("end"):
+            start_pt, end_pt = ann["start"], ann["end"]; line(start_pt, end_pt, rgba, thickness)
+            angle = math.atan2(end_pt[1] - start_pt[1], end_pt[0] - start_pt[0]); head = max(8, thickness * 4)
+            for delta in (math.pi * 0.8, -math.pi * 0.8):
+                tip = (end_pt[0] + head * math.cos(angle + delta), end_pt[1] + head * math.sin(angle + delta))
+                line(end_pt, tip, rgba, thickness)
+            drawn += 1
+
+    work.pixels[:] = pixels
+    work.update()
+    scene = bpy.context.scene
+    tree = None
+    temp_camera = None
+    try:
+        with BlenderStateGuard():
+            tree = bpy.data.node_groups.new("_MCP_Markup_Compositor", "CompositorNodeTree")
+            tree.interface.new_socket(name="Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+            image_node = tree.nodes.new("CompositorNodeImage"); image_node.image = work
+            output_node = tree.nodes.new("NodeGroupOutput")
+            tree.links.new(image_node.outputs["Image"], output_node.inputs["Image"])
+            scene.compositing_node_group = tree
+            if scene.camera is None:
+                camera_data = bpy.data.cameras.new("_mcp_markup_camera")
+                temp_camera = bpy.data.objects.new("_mcp_markup_camera", camera_data)
+                bpy.context.collection.objects.link(temp_camera)
+                scene.camera = temp_camera
+            scene.render.resolution_x = width; scene.render.resolution_y = height; scene.render.resolution_percentage = 100
+            scene.render.filepath = output_path
+            scene.render.image_settings.file_format = "JPEG" if os.path.splitext(output_path)[1].lower() in (".jpg", ".jpeg") else "PNG"
+            bpy.ops.render.render(write_still=True)
+    finally:
+        if temp_camera is not None:
+            camera_data = temp_camera.data
+            bpy.data.objects.remove(temp_camera, do_unlink=True)
+            bpy.data.cameras.remove(camera_data)
+        if tree is not None and tree.name in bpy.data.node_groups:
+            bpy.data.node_groups.remove(tree)
+        if work.name in bpy.data.images:
+            bpy.data.images.remove(work)
+        if source.name in bpy.data.images:
+            bpy.data.images.remove(source)
+
+    return {"success": True, "output_path": output_path, "annotations_drawn": drawn,
+            "image_size": [width, height], "method": "compositor_fallback"}
 
 
 # ── Preset builder helpers ────────────────────────────────────────────
