@@ -40,7 +40,11 @@ def markup_case():
  assert r['method']=='compositor_fallback' and os.path.exists(out) and os.path.getsize(out)>100,r
 
 def engine_case():
- h=reset(); r=h.handle('render_set_engine',{'engine':'BLENDER_EEVEE_NEXT'}); assert r['engine']=='BLENDER_EEVEE',r
+ h=reset(); r=h.handle('render_set_engine',{'engine':'BLENDER_EEVEE'}); assert r['engine']=='BLENDER_EEVEE',r
+ from blender_mcp_addon.validation import ValidationError
+ try: h.handle('render_set_engine',{'engine':'BLENDER_EEVEE_NEXT'})
+ except ValidationError: pass
+ else: raise AssertionError('removed BLENDER_EEVEE_NEXT alias accepted')
 
 def control_render_case():
  h=reset(); cube('Control'); camera(); scene=bpy.context.scene; scene.render.resolution_percentage=100; before=(scene.render.engine,scene.render.filepath,scene.render.resolution_x,scene.render.resolution_y)

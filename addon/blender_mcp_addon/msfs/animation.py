@@ -4,6 +4,8 @@ from typing import Any
 
 import bpy
 
+from ..compat import get_fcurves
+
 # MSFS animation tags/events
 ANIMATION_TAGS = {
     # State events
@@ -376,11 +378,12 @@ def get_animation_info(object_name: str) -> dict[str, Any]:
         action = obj.animation_data.action
         info["action_name"] = action.name
         info["frame_range"] = list(action.frame_range)
-        info["fcurve_count"] = len(action.fcurves)
+        fcurves = get_fcurves(action)
+        info["fcurve_count"] = len(fcurves)
 
         # Get animated properties
         animated_props = set()
-        for fc in action.fcurves:
+        for fc in fcurves:
             animated_props.add(fc.data_path)
         info["animated_properties"] = list(animated_props)
 

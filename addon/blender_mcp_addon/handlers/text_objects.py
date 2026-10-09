@@ -373,7 +373,7 @@ class TextObjectHandlersMixin:
         bevel_depth = float(params.get("bevel_depth", 0.0))
         bevel_resolution = int(params.get("bevel_resolution", 4))
         letter_spacing = float(params.get("letter_spacing", 1.0))
-        solver = validate_enum(params.get("solver", "EXACT"), "solver", ["FAST", "EXACT"])
+        solver = validate_enum(params.get("solver", "EXACT"), "solver", ["FLOAT", "EXACT"])
         triangulate = params.get("triangulate", True)
         font_path = params.get("font_path")
 
@@ -456,7 +456,7 @@ class TextObjectHandlersMixin:
         z_bottom = float(require_param(params, "z_bottom", (int, float)))
 
         keep_aspect = bool(params.get("keep_aspect", False))
-        solver = validate_enum(params.get("solver", "EXACT"), "solver", ["FAST", "EXACT"])
+        solver = validate_enum(params.get("solver", "EXACT"), "solver", ["FLOAT", "EXACT"])
         triangulate = params.get("triangulate", True)
         separate_loose = params.get("separate_loose", True)
 

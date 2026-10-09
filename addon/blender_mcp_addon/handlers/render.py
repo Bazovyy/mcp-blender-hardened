@@ -66,7 +66,7 @@ class RenderHandlersMixin:
         engine = params["engine"].upper()
 
         # Blender 5.2 uses BLENDER_EEVEE; accept old aliases without exposing them in schema.
-        if engine in ("EEVEE", "BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
+        if engine in ("EEVEE", "BLENDER_EEVEE"):
             engine = "BLENDER_EEVEE"
         engine = validate_enum(engine, "engine", ["BLENDER_EEVEE", "BLENDER_WORKBENCH", "CYCLES"])
         bpy.context.scene.render.engine = engine

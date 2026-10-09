@@ -41,7 +41,7 @@ def register_render_tools(server: "Server", get_client: "callable") -> None:
 
     @server.call_tool()
     async def blender_render_set_engine(arguments: dict) -> list:
-        """Set the render engine (CYCLES, BLENDER_EEVEE_NEXT, BLENDER_WORKBENCH)."""
+        """Set the render engine (CYCLES, BLENDER_EEVEE, BLENDER_WORKBENCH)."""
         client: BlenderClient = await get_client()
         result = await client.send_command(
             "render_set_engine",

@@ -26,7 +26,7 @@ class RenderEngine(str, Enum):
     """Supported render engines."""
 
     CYCLES = "CYCLES"
-    EEVEE = "BLENDER_EEVEE_NEXT"
+    EEVEE = "BLENDER_EEVEE"
     WORKBENCH = "BLENDER_WORKBENCH"
 
 

@@ -16,6 +16,12 @@ from ..validation import (
 )
 
 
+def _rotation_to_radians(rotation, unit: str):
+    unit = validate_enum(unit, "rotation_unit", ["RADIANS", "DEGREES"])
+    values = validate_vector3(rotation, "rotation")
+    return [math.radians(v) for v in values] if unit == "DEGREES" else list(values)
+
+
 class ObjectHandlersMixin:
     """Mixin for object-related handlers."""
 
@@ -34,9 +40,12 @@ class ObjectHandlersMixin:
         if location != [0, 0, 0]:
             location = validate_vector3(location, "location")
 
-        rotation = params.get("rotation", [0, 0, 0])
-        if rotation != [0, 0, 0]:
-            rotation = validate_vector3(rotation, "rotation")
+        if "rotation" in params:
+            rotation = _rotation_to_radians(
+                params["rotation"], require_param(params, "rotation_unit", str)
+            )
+        else:
+            rotation = [0.0, 0.0, 0.0]
 
         scale = params.get("scale", [1, 1, 1])
         if scale != [1, 1, 1]:
@@ -66,7 +75,7 @@ class ObjectHandlersMixin:
             obj.name = params["name"]
 
         # Apply rotation and scale
-        obj.rotation_euler = [math.radians(r) if abs(r) > 2 * math.pi else r for r in rotation]
+        obj.rotation_euler = rotation
         obj.scale = scale
 
         return serialize_object(obj)
@@ -103,12 +112,13 @@ class ObjectHandlersMixin:
         obj = get_object_or_error(params["name"])
 
         if "location" in params:
-            obj.location = params["location"]
+            obj.location = validate_vector3(params["location"], "location")
         if "rotation" in params:
-            rotation = params["rotation"]
-            obj.rotation_euler = [math.radians(r) if abs(r) > 2 * math.pi else r for r in rotation]
+            obj.rotation_euler = _rotation_to_radians(
+                params["rotation"], require_param(params, "rotation_unit", str)
+            )
         if "scale" in params:
-            obj.scale = params["scale"]
+            obj.scale = validate_vector3(params["scale"], "scale")
 
         return serialize_object(obj)
 

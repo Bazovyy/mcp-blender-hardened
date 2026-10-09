@@ -421,7 +421,7 @@ def set_paint_brush(
         if "size" in preset_data:
             brush.size = preset_data["size"]
         if "falloff" in preset_data:
-            brush.curve_preset = preset_data["falloff"]
+            brush.curve_distance_falloff_preset = preset_data["falloff"]
         if "use_pressure_strength" in preset_data:
             brush.use_pressure_strength = preset_data["use_pressure_strength"]
         result["preset_applied"] = preset
