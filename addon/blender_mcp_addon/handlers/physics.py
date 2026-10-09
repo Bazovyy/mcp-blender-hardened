@@ -178,9 +178,9 @@ class PhysicsHandlersMixin:
 
         # Collect final positions of rigid body objects
         final_positions = {}
-        rb_group = scene.rigidbody_world.group
-        if rb_group:
-            for obj in rb_group.objects:
+        rb_collection = scene.rigidbody_world.collection
+        if rb_collection:
+            for obj in rb_collection.objects:
                 final_positions[obj.name] = {
                     "location": [round(v, 6) for v in obj.location],
                     "rotation_euler": [round(v, 6) for v in obj.rotation_euler],
@@ -189,9 +189,9 @@ class PhysicsHandlersMixin:
         # Apply results if requested
         applied_objects = []
         if apply_results:
-            if rb_group:
+            if rb_collection:
                 # Iterate over a copy of the list since we modify it
-                for obj in list(rb_group.objects):
+                for obj in list(rb_collection.objects):
                     ensure_object_selected(obj)
                     try:
                         # Apply visual transform to mesh
@@ -208,6 +208,9 @@ class PhysicsHandlersMixin:
             "frame_range": [frame_start, frame_end],
             "final_positions": final_positions,
             "rigid_body_count": len(final_positions),
+            # Task 10 migrates this bake to the generic job runtime. Until then,
+            # advertise the blocking behavior explicitly instead of pretending it is cancellable.
+            "blocking_risk": "synchronous_cache_bake",
         }
         if apply_results:
             response["applied_objects"] = applied_objects
