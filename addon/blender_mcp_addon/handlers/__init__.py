@@ -7,6 +7,8 @@ and wires up the handler dispatch table in ``_register_handlers()``.
 
 from typing import Any
 
+from ..transactions import OperationTransaction
+
 from .ai import AIHandlersMixin
 from .animation import AnimationHandlersMixin
 from .annotations import AnnotationHandlersMixin
@@ -385,8 +387,14 @@ class CommandHandlers(
         self._handlers["geonode_inspect"] = self._handle_geonode_inspect
 
     def handle(self, method: str, params: dict) -> Any:
-        """Handle a command by method name."""
+        """Handle one command within an identified operation boundary."""
         handler = self._handlers.get(method)
         if handler is None:
             raise ValueError(f"Unknown method: {method}")
-        return handler(params)
+        high_risk_prefixes = ("sculpt_", "physics_", "bake_", "ai_", "msfs_")
+        risk_class = "high" if method.startswith(high_risk_prefixes) or method in {"undo", "redo", "save", "save_as", "execute_script", "server_restart"} else "normal"
+        with OperationTransaction(method=method, risk_class=risk_class) as transaction:
+            self._last_transaction = transaction
+            result = handler(params)
+            transaction.result_state = "completed"
+            return result
