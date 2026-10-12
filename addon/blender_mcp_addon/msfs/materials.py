@@ -233,9 +233,9 @@ def create_glass_material(
     principled.inputs["Alpha"].default_value = opacity
     principled.inputs["Transmission Weight"].default_value = 1.0 - opacity
 
-    # Material settings
-    mat.blend_method = "BLEND"
-    mat.shadow_method = "HASHED"
+    # Blender 5.2 material transparency settings.
+    mat.surface_render_method = "BLENDED"
+    mat.use_transparent_shadow = True
     mat.use_backface_culling = False
 
     # MSFS type

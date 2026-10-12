@@ -370,37 +370,18 @@ def auto_uv_unwrap(
 
         # Set as active
         obj.data.uv_layers.active = uv_layer
+        uv_layer_name_actual = str(uv_layer.name)
 
         # Enter edit mode and select all
         bpy.ops.object.mode_set(mode="EDIT")
         bpy.ops.mesh.select_all(action="SELECT")
 
-        # UV operators need a 3D viewport context override when called
-        # from a socket handler thread (no active area by default).
         import math
+        from contextlib import nullcontext
+        from ..context import find_view3d_context
 
-        area = None
-        for window in bpy.context.window_manager.windows:
-            for a in window.screen.areas:
-                if a.type == "VIEW_3D":
-                    area = a
-                    break
-            if area:
-                break
-
-        if area:
-            region = None
-            for r in area.regions:
-                if r.type == "WINDOW":
-                    region = r
-                    break
-            ctx_override = bpy.context.temp_override(
-                window=window, area=area, region=region
-            )
-        else:
-            # Fallback: no 3D viewport found, try without override
-            from contextlib import nullcontext
-            ctx_override = nullcontext()
+        override = find_view3d_context()
+        ctx_override = bpy.context.temp_override(**override) if override else nullcontext()
 
         with ctx_override:
             if method == "SMART":
@@ -450,6 +431,7 @@ def auto_uv_unwrap(
 
         # Return to object mode
         bpy.ops.object.mode_set(mode="OBJECT")
+        uv_layer = obj.data.uv_layers.get(uv_layer_name_actual) or obj.data.uv_layers.active
 
         if original_active:
             bpy.context.view_layer.objects.active = original_active
@@ -458,7 +440,7 @@ def auto_uv_unwrap(
             "success": True,
             "object": object_name,
             "method": method,
-            "uv_layer": uv_layer.name,
+            "uv_layer": uv_layer.name if uv_layer is not None else uv_layer_name_actual,
             "uv_layers": list(obj.data.uv_layers.keys()),
         }
 

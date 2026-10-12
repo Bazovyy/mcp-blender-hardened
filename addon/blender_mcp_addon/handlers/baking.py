@@ -18,6 +18,146 @@ from ._helpers import (
 class BakingHandlersMixin:
     """Mixin for texture baking handlers."""
 
+
+    @staticmethod
+    def _bake_create_image(name, resolution, color_space):
+        """Create a deterministic square bake target image."""
+        old = bpy.data.images.get(name)
+        if old is not None:
+            bpy.data.images.remove(old)
+        image = bpy.data.images.new(
+            name=name, width=int(resolution), height=int(resolution), alpha=True
+        )
+        try:
+            image.colorspace_settings.name = color_space
+        except Exception:
+            # Blender may expose different display labels; baking itself is still valid.
+            pass
+        return image
+
+    @staticmethod
+    def _bake_set_active_image_node(obj, image):
+        """Install/select a temporary image-texture bake target in every material."""
+        if len(obj.material_slots) == 0:
+            mat = bpy.data.materials.new(name=f"{obj.name}_BakeMat")
+            mat.use_nodes = True
+            obj.data.materials.append(mat)
+        created = 0
+        for slot in obj.material_slots:
+            mat = slot.material
+            if mat is None:
+                continue
+            mat.use_nodes = True
+            tree = mat.node_tree
+            node = tree.nodes.new("ShaderNodeTexImage")
+            node.name = f"__mcp_bake_target_{image.name}_{created}"
+            node.label = "MCP Bake Target"
+            node.image = image
+            node.select = True
+            node["mcp_bake_target"] = True
+            tree.nodes.active = node
+            created += 1
+        if created == 0:
+            raise RuntimeError(f"Could not create a bake target node for '{obj.name}'")
+
+    @staticmethod
+    def _bake_cleanup_image_nodes(obj):
+        for slot in obj.material_slots:
+            mat = slot.material
+            if mat is None or not mat.use_nodes or mat.node_tree is None:
+                continue
+            nodes = mat.node_tree.nodes
+            for node in list(nodes):
+                if bool(node.get("mcp_bake_target", False)):
+                    nodes.remove(node)
+
+    @staticmethod
+    def _bake_save_image(image, filepath, output_format):
+        os.makedirs(os.path.dirname(filepath) or ".", exist_ok=True)
+        image.filepath_raw = filepath
+        image.file_format = output_format
+        image.save_render(filepath, scene=bpy.context.scene)
+
+    @staticmethod
+    def _bake_apply_scalar_emission_trick(obj, input_name):
+        """Temporarily route a Principled scalar/material input to Emission for baking."""
+        states = []
+        for slot in obj.material_slots:
+            mat = slot.material
+            if mat is None or not mat.use_nodes or mat.node_tree is None:
+                continue
+            tree = mat.node_tree
+            output = next((n for n in tree.nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output), None)
+            principled = next((n for n in tree.nodes if n.type == "BSDF_PRINCIPLED"), None)
+            if output is None or principled is None or input_name not in principled.inputs:
+                continue
+            surface = output.inputs.get("Surface")
+            old_links = [link.from_socket for link in list(surface.links)] if surface else []
+            emission = tree.nodes.new("ShaderNodeEmission")
+            emission["mcp_bake_trick"] = True
+            src = principled.inputs[input_name]
+            if src.is_linked:
+                tree.links.new(src.links[0].from_socket, emission.inputs["Color"])
+            else:
+                value = src.default_value
+                try:
+                    scalar = float(value)
+                    emission.inputs["Color"].default_value = (scalar, scalar, scalar, 1.0)
+                except (TypeError, ValueError):
+                    emission.inputs["Color"].default_value = value
+            if surface is not None:
+                tree.links.new(emission.outputs["Emission"], surface)
+            states.append((tree, output, old_links, emission))
+        return states
+
+    @staticmethod
+    def _bake_restore_scalar_emission_trick(states):
+        for tree, output, old_links, emission in states or []:
+            surface = output.inputs.get("Surface") if output else None
+            if emission in tree.nodes:
+                tree.nodes.remove(emission)
+            if surface is not None:
+                for socket in old_links:
+                    try:
+                        tree.links.new(socket, surface)
+                    except Exception:
+                        pass
+
+    def _bake_apply_metallic_trick(self, obj):
+        return self._bake_apply_scalar_emission_trick(obj, "Metallic")
+
+    def _bake_restore_metallic_trick(self, state):
+        self._bake_restore_scalar_emission_trick(state)
+
+    def _bake_apply_displacement_trick(self, obj):
+        # The Principled BSDF has no displacement scalar; prefer the material output's
+        # displacement link when present, otherwise emit black deterministically.
+        states = []
+        for slot in obj.material_slots:
+            mat = slot.material
+            if mat is None or not mat.use_nodes or mat.node_tree is None:
+                continue
+            tree = mat.node_tree
+            output = next((n for n in tree.nodes if n.type == "OUTPUT_MATERIAL" and n.is_active_output), None)
+            if output is None:
+                continue
+            surface = output.inputs.get("Surface")
+            displacement = output.inputs.get("Displacement")
+            old_surface = [link.from_socket for link in list(surface.links)] if surface else []
+            emission = tree.nodes.new("ShaderNodeEmission")
+            emission["mcp_bake_trick"] = True
+            if displacement is not None and displacement.is_linked:
+                tree.links.new(displacement.links[0].from_socket, emission.inputs["Color"])
+            else:
+                emission.inputs["Color"].default_value = (0.0, 0.0, 0.0, 1.0)
+            if surface is not None:
+                tree.links.new(emission.outputs["Emission"], surface)
+            states.append((tree, output, old_surface, emission))
+        return states
+
+    def _bake_restore_displacement_trick(self, state):
+        self._bake_restore_scalar_emission_trick(state)
+
     def _handle_bake_pbr_batch(self, params: dict) -> dict:
         """Bake all requested PBR channels in one call."""
 
@@ -324,14 +464,18 @@ class BakingHandlersMixin:
         self._bake_set_active_image_node(obj, image)
 
         try:
-            # Configure multires bake
-            bpy.context.scene.render.bake.margin = margin
-
-            # Bake with multires
-            bpy.ops.object.bake(
-                type=map_type,
-                use_clear=True,
-            )
+            # Blender 5.2 exposes multires map type on BakeSettings, not object.bake(type=...).
+            bake_settings = bpy.context.scene.render.bake
+            previous_type = bake_settings.type
+            previous_multires = bake_settings.use_multires
+            bake_settings.margin = margin
+            bake_settings.type = map_type
+            bake_settings.use_multires = True
+            try:
+                bpy.ops.object.bake_image()
+            finally:
+                bake_settings.type = previous_type
+                bake_settings.use_multires = previous_multires
 
             self._bake_save_image(image, output_path, "PNG")
 

@@ -179,11 +179,17 @@ def setup_paint_mode(
 
     bpy.ops.object.mode_set(mode="TEXTURE_PAINT")
 
-    # Set paint texture as active
-    for area in bpy.context.screen.areas:
-        if area.type == "VIEW_3D":
+    # Set material preview only when the active SpaceView3D exposes it.
+    # Background Blender may expose a VIEW_3D shell whose shading enum omits MATERIAL.
+    if not bpy.app.background and bpy.context.screen is not None:
+        for area in bpy.context.screen.areas:
+            if area.type != "VIEW_3D":
+                continue
             for space in area.spaces:
-                if space.type == "VIEW_3D":
+                if space.type != "VIEW_3D":
+                    continue
+                enum_items = space.shading.bl_rna.properties["type"].enum_items
+                if "MATERIAL" in {item.identifier for item in enum_items}:
                     space.shading.type = "MATERIAL"
 
     # Configure paint settings
@@ -358,6 +364,12 @@ def export_uv_layout(
     mesh = obj.data
     if not mesh.uv_layers:
         return {"error": "Object has no UV map"}
+    if bpy.app.background:
+        return {
+            "success": False,
+            "code": "context_required",
+            "error": "UV layout PNG export requires an initialized interactive GPU context",
+        }
 
     # Select object and enter edit mode
     bpy.ops.object.select_all(action="DESELECT")

@@ -1176,50 +1176,40 @@ class MeshEditingHandlersMixin:
 
 
     def _handle_mesh_crease(self, params: dict) -> dict:
-        """Set edge crease values for subdivision surface control."""
-        import bmesh
-
+        """Set Blender 5.2 edge crease values through the crease_edge attribute."""
         object_name = require_param(params, "object_name", str)
         edge_indices = params.get("edge_indices")
-        crease_value = params.get("crease_value", 1.0)
-        selected_only = params.get("selected_only", False)
+        crease_value = max(0.0, min(1.0, float(params.get("crease_value", 1.0))))
+        selected_only = bool(params.get("selected_only", False))
 
         obj = get_object_or_error(object_name)
         if obj.type != "MESH":
             raise ValidationError(f"Object '{object_name}' is not a mesh")
+        mesh = obj.data
+        attr = mesh.attributes.get("crease_edge")
+        if attr is None:
+            attr = mesh.attributes.new(name="crease_edge", type="FLOAT", domain="EDGE")
+        if attr.domain != "EDGE" or attr.data_type != "FLOAT":
+            raise ValidationError("Existing crease_edge attribute must be FLOAT on EDGE domain")
 
-        bm = bmesh.new()
-        bm.from_mesh(obj.data)
-        bm.edges.ensure_lookup_table()
-
-        crease_layer = bm.edges.layers.crease.verify()
-
+        selected = mesh.attributes.get(".select_edge") if selected_only else None
         affected = 0
         if edge_indices is not None:
-            for i in edge_indices:
-                i = int(i)
-                if 0 <= i < len(bm.edges):
-                    bm.edges[i][crease_layer] = crease_value
-                    affected += 1
+            candidates = [int(i) for i in edge_indices]
+        elif selected_only and selected is not None:
+            candidates = [i for i, item in enumerate(selected.data) if bool(item.value)]
         elif selected_only:
-            for e in bm.edges:
-                if e.select:
-                    e[crease_layer] = crease_value
-                    affected += 1
+            candidates = [e.index for e in mesh.edges if e.select]
         else:
-            for e in bm.edges:
-                e[crease_layer] = crease_value
+            candidates = range(len(mesh.edges))
+        for i in candidates:
+            if 0 <= i < len(attr.data):
+                attr.data[i].value = crease_value
                 affected += 1
-
-        bm.to_mesh(obj.data)
-        bm.free()
-        obj.data.update()
-
+        mesh.update()
         return {
-            "success": True,
-            "object": object_name,
-            "crease_value": crease_value,
-            "affected_edges": affected,
+            "success": True, "object": object_name, "crease_value": crease_value,
+            "affected_edges": affected, "attribute": "crease_edge",
         }
 
 
@@ -2212,7 +2202,7 @@ class MeshEditingHandlersMixin:
         opacity = params.get("opacity", 0.5)
         size = params.get("size", 5.0)
 
-        validate_filepath(image_path)
+        validate_filepath(image_path, "image_path", must_exist=True)
 
         # Create image empty
         bpy.ops.object.empty_add(type="IMAGE")

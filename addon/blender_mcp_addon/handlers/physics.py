@@ -467,7 +467,8 @@ class PhysicsHandlersMixin:
         # Set as flow (inflow)
         flow_mod.fluid_type = 'FLOW'
         flow_settings = flow_mod.flow_settings
-        flow_settings.flow_type = fluid_type
+        blender_flow_type = 'SMOKE' if fluid_type == 'GAS' else 'LIQUID'
+        flow_settings.flow_type = blender_flow_type
         flow_settings.flow_behavior = 'INFLOW'
 
         return {
@@ -483,6 +484,7 @@ class PhysicsHandlersMixin:
                 "object": flow_obj.name,
                 "type": "FLOW",
                 "flow_type": fluid_type,
+                "blender_flow_type": blender_flow_type,
                 "behavior": "INFLOW",
             },
             "note": "Use bpy.ops.fluid.bake_all() or the Physics tab to bake the simulation before rendering.",

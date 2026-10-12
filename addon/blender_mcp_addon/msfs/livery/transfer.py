@@ -368,6 +368,10 @@ def map_design_elements(
     mapped_elements = []
 
     for element in elements:
+        if isinstance(element, str):
+            element = {"type": element}
+        elif not isinstance(element, dict):
+            return {"error": "Each design element must be a string type name or an object"}
         element_type = element.get("type", "unknown")
         mapped = {
             "type": element_type,

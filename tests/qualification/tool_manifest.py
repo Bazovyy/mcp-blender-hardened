@@ -1,88 +1,38 @@
 from __future__ import annotations
-
-import ast
+import ast,copy,json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
-
-PayloadFactory = Callable[[], dict[str, Any]]
-FixtureFactory = Callable[[], Any]
-ResultAssert = Callable[[Any], None]
-Cleanup = Callable[[], None]
-
-
+from typing import Any,Callable
+PayloadFactory=Callable[[],dict[str,Any]]
 @dataclass(frozen=True)
 class ToolCase:
-    name: str
-    risk: str
-    payload_factory: PayloadFactory
-    fixture_factory: FixtureFactory | None = None
-    assert_result: ResultAssert | None = None
-    cleanup: Cleanup | None = None
-    skip_external: str | None = None
-    qualification_case: str | None = None
+    name:str
+    risk:str
+    payload_factory:PayloadFactory
+    status:str
+    reason:str|None=None
+    skip_external:str|None=None
+    allowed_error_codes:tuple[str,...]=()
 
-
-def _empty_payload() -> dict[str, Any]:
-    return {}
-
-
-def _server_path() -> Path:
-    return Path(__file__).resolve().parents[2] / "src" / "mcp_blender" / "server.py"
-
-
-def discover_mcp_tool_names(server_path: Path | None = None) -> list[str]:
-    path = server_path or _server_path()
-    tree = ast.parse(path.read_text(encoding="utf-8-sig"), filename=str(path))
-    names: list[str] = []
+def _server_path()->Path:return Path(__file__).resolve().parents[2]/'src'/'mcp_blender'/'server.py'
+def _cases_path()->Path:return Path(__file__).with_name('cases.json')
+def discover_mcp_tool_names(server_path:Path|None=None)->list[str]:
+    path=server_path or _server_path();tree=ast.parse(path.read_text(encoding='utf-8-sig'),filename=str(path));names=[]
     for node in ast.walk(tree):
-        if not isinstance(node, ast.Call):
-            continue
-        func_name = node.func.id if isinstance(node.func, ast.Name) else None
-        if func_name != "Tool":
-            continue
-        for keyword in node.keywords:
-            if keyword.arg == "name" and isinstance(keyword.value, ast.Constant) and isinstance(keyword.value.value, str):
-                names.append(keyword.value.value)
-                break
+        if not isinstance(node,ast.Call) or not isinstance(node.func,ast.Name) or node.func.id!='Tool':continue
+        for kw in node.keywords:
+            if kw.arg=='name' and isinstance(kw.value,ast.Constant) and isinstance(kw.value.value,str):names.append(kw.value.value);break
     return names
 
+def build_manifest()->list[ToolCase]:
+    raw=json.loads(_cases_path().read_text(encoding='utf-8'))
+    out=[]
+    for entry in raw:
+        payload=entry.get('payload',{})
+        out.append(ToolCase(name=entry['name'],risk=entry['risk'],status=entry['status'],reason=entry.get('reason'),skip_external=entry.get('reason') if entry['status']=='SKIP_EXTERNAL' else None,payload_factory=lambda p=payload:copy.deepcopy(p),allowed_error_codes=tuple(entry.get('allowed_error_codes',()))))
+    return out
 
-def _classify(name: str) -> tuple[str, str | None]:
-    external_prefixes = ("blender_ai_", "blender_polyhaven_", "blender_refine_")
-    if name.startswith(external_prefixes) or name == "blender_analyze_viewport":
-        return "external", "requires an external AI/content provider or service"
-    if any(token in name for token in ("sculpt_", "mesh_loop_cut", "mesh_knife_project", "mesh_edge_slide", "render_screenshot")):
-        return "context_heavy", None
-    if any(token in name for token in ("bake_", "physics_simulate", "render_animation")):
-        return "blocking", None
-    if any(token in name for token in ("_get_", "_list", "_info", "_inspect", "measure_", "validate_", "_check_", "_stats")):
-        return "read", None
-    return "bounded_mutation", None
-
-
-_QUALIFICATION_CASES = {
-    "blender_boolean_op": "boolean_float",
-    "blender_mesh_select_edge_loops": "edge_loop",
-    "blender_mesh_edge_slide": "edge_slide",
-    "blender_mesh_loop_cut": "loop_cut",
-    "blender_mesh_knife_project": "knife_context",
-}
-
-
-def build_manifest() -> list[ToolCase]:
-    cases: list[ToolCase] = []
-    for name in discover_mcp_tool_names():
-        risk, skip = _classify(name)
-        cases.append(ToolCase(
-            name=name, risk=risk, payload_factory=_empty_payload, skip_external=skip,
-            qualification_case=_QUALIFICATION_CASES.get(name),
-        ))
-    return cases
-
-
-def get_case(name: str) -> ToolCase:
-    matches = [case for case in build_manifest() if case.name == name]
-    if len(matches) != 1:
-        raise KeyError(f"Expected exactly one manifest case for {name!r}, found {len(matches)}")
+def get_case(name:str)->ToolCase:
+    matches=[c for c in build_manifest() if c.name==name]
+    if len(matches)!=1:raise KeyError(f'Expected exactly one manifest case for {name!r}, found {len(matches)}')
     return matches[0]

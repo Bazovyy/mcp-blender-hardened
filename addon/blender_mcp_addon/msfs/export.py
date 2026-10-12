@@ -16,7 +16,7 @@ DEFAULT_EXPORT_SETTINGS = {
     "export_normals": True,
     "export_tangents": True,
     "export_materials": "EXPORT",
-    "export_colors": True,
+    "export_all_vertex_colors": True,
     "export_cameras": False,
     "export_lights": False,
     "export_extras": True,  # Required for MSFS custom properties
@@ -111,7 +111,8 @@ def export_msfs_model(
     # Build export settings
     settings = DEFAULT_EXPORT_SETTINGS.copy()
     settings["filepath"] = str(path)
-    settings["export_format"] = export_format.upper()
+    public_format = export_format.upper()
+    settings["export_format"] = "GLTF_SEPARATE" if public_format == "GLTF" else public_format
     settings["use_selection"] = True
     settings["export_animations"] = include_animations
 

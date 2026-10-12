@@ -1,0 +1,2571 @@
+[
+  {
+    "name": "blender_scene_info",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_scene_new",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "QualScene"
+    }
+  },
+  {
+    "name": "blender_scene_clear",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {}
+  },
+  {
+    "name": "blender_scene_set_frame_range",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "start": 1,
+      "end": 2
+    }
+  },
+  {
+    "name": "blender_get_version",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_server_restart",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {}
+  },
+  {
+    "name": "blender_job_status",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "job_id": "$JOB"
+    }
+  },
+  {
+    "name": "blender_job_cancel",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "job_id": "$JOB"
+    }
+  },
+  {
+    "name": "blender_job_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_object_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "type": "cube",
+      "name": "NewCube"
+    }
+  },
+  {
+    "name": "blender_object_delete",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "DeleteMe"
+    }
+  },
+  {
+    "name": "blender_object_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_object_get",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "Cube"
+    }
+  },
+  {
+    "name": "blender_object_transform",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "Cube",
+      "location": [
+        0.1,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_object_duplicate",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "Cube",
+      "new_name": "Copy"
+    }
+  },
+  {
+    "name": "blender_object_join",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "names": [
+        "Source",
+        "DeleteMe"
+      ]
+    }
+  },
+  {
+    "name": "blender_object_separate",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "Cube",
+      "mode": "LOOSE"
+    }
+  },
+  {
+    "name": "blender_object_parent",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "child": "Source",
+      "parent": "Target"
+    }
+  },
+  {
+    "name": "blender_object_select",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "names": [
+        "Cube"
+      ],
+      "deselect_others": true
+    }
+  },
+  {
+    "name": "blender_material_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "NewMat"
+    }
+  },
+  {
+    "name": "blender_material_assign",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "material_name": "Mat"
+    }
+  },
+  {
+    "name": "blender_material_set_color",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "color": [
+        0.2,
+        0.4,
+        0.6,
+        1.0
+      ]
+    }
+  },
+  {
+    "name": "blender_material_set_principled",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "roughness": 0.4
+    }
+  },
+  {
+    "name": "blender_material_add_texture",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "image_path": "$IMAGE",
+      "connect_to": "Base Color"
+    }
+  },
+  {
+    "name": "blender_material_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_modifier_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Source",
+      "modifier_type": "BEVEL",
+      "modifier_name": "QualBevel"
+    }
+  },
+  {
+    "name": "blender_modifier_remove",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "modifier_name": "Bevel"
+    }
+  },
+  {
+    "name": "blender_modifier_apply",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "modifier_name": "Bevel"
+    }
+  },
+  {
+    "name": "blender_modifier_configure",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "modifier_name": "Bevel",
+      "properties": {
+        "width": 0.1
+      }
+    }
+  },
+  {
+    "name": "blender_modifier_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_keyframe_insert",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "data_path": "location",
+      "frame": 2,
+      "index": 0,
+      "value": 0.3
+    }
+  },
+  {
+    "name": "blender_keyframe_delete",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "data_path": "location",
+      "frame": 1,
+      "index": 0
+    }
+  },
+  {
+    "name": "blender_keyframe_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_action_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "QualAction",
+      "object_name": "Source"
+    }
+  },
+  {
+    "name": "blender_action_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_animation_play",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "play": false
+    }
+  },
+  {
+    "name": "blender_animation_goto_frame",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "frame": 1
+    }
+  },
+  {
+    "name": "blender_render_image",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "output_path": "$OUT/render.png",
+      "overwrite": true,
+      "file_format": "PNG"
+    }
+  },
+  {
+    "name": "blender_render_animation",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "output_path": "$OUT/anim_",
+      "overwrite": true,
+      "file_format": "PNG",
+      "start_frame": 1,
+      "end_frame": 1
+    }
+  },
+  {
+    "name": "blender_render_set_engine",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "engine": "BLENDER_WORKBENCH"
+    }
+  },
+  {
+    "name": "blender_render_set_resolution",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "width": 32,
+      "height": 32,
+      "percentage": 100
+    }
+  },
+  {
+    "name": "blender_render_screenshot",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {}
+  },
+  {
+    "name": "blender_export_gltf",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$OUT/export.glb",
+      "overwrite": true,
+      "export_format": "GLB"
+    }
+  },
+  {
+    "name": "blender_export_fbx",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$OUT/export.fbx",
+      "overwrite": true
+    }
+  },
+  {
+    "name": "blender_export_obj",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$OUT/export.obj",
+      "overwrite": true
+    }
+  },
+  {
+    "name": "blender_export_stl",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$OUT/export.stl",
+      "overwrite": true
+    }
+  },
+  {
+    "name": "blender_export_usd",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$OUT/export.usd",
+      "overwrite": true
+    }
+  },
+  {
+    "name": "blender_import_file",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$IMPORT_FILE"
+    }
+  },
+  {
+    "name": "blender_polyhaven_search",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires Poly Haven network service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_polyhaven_download",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires Poly Haven network service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_generate_model",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured AI generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_model_status",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires provider job id",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_list_backends",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "available_only": false
+    }
+  },
+  {
+    "name": "blender_ai_set_backend",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "backend": null,
+      "prefer_local": true
+    }
+  },
+  {
+    "name": "blender_ai_configure_backend",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "backend": "rodin",
+      "config": {}
+    }
+  },
+  {
+    "name": "blender_ai_generate_model_sync",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured AI generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_generate_texture",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured image generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_generate_texture_sync",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured image generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_generate_reference_image",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured image generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_inpaint_texture",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured image generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_texture_from_render",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured image generation provider",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_create_lod_hierarchy",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "base_object_name": "Cube",
+      "lod_count": 2,
+      "auto_decimate": false
+    }
+  },
+  {
+    "name": "blender_msfs_decimate_for_lod",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube_LOD1",
+      "ratio": 0.8
+    }
+  },
+  {
+    "name": "blender_msfs_setup_lod_distances",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "base_name": "Cube",
+      "distances": {
+        "LOD0": 0,
+        "LOD1": 50
+      }
+    }
+  },
+  {
+    "name": "blender_msfs_get_lod_info",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "base_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_msfs_setup_material",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "msfs_type": "STANDARD"
+    }
+  },
+  {
+    "name": "blender_msfs_create_glass_material",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Glass"
+    }
+  },
+  {
+    "name": "blender_msfs_create_emissive_material",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Emissive"
+    }
+  },
+  {
+    "name": "blender_msfs_get_material_presets",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_create_collision_mesh",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "source_object_name": "Source",
+      "collision_type": "collider",
+      "simplify": false
+    }
+  },
+  {
+    "name": "blender_msfs_create_collision_box",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_msfs_create_collision_convex",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_msfs_tag_collision_type",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "collision_type": "collider"
+    }
+  },
+  {
+    "name": "blender_msfs_add_animation_tag",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "tag_type": "start",
+      "frame": 1
+    }
+  },
+  {
+    "name": "blender_msfs_setup_visibility_animation",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "visible_range": [
+        1,
+        2
+      ],
+      "hidden_range": [
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "name": "blender_msfs_configure_animation_loop",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "behavior": "loop",
+      "loop_start": 1,
+      "loop_end": 2
+    }
+  },
+  {
+    "name": "blender_msfs_list_animation_tags",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_msfs_export_model",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "filepath": "$OUT/msfs.gltf",
+      "objects": [
+        "Cube"
+      ],
+      "export_format": "GLTF"
+    }
+  },
+  {
+    "name": "blender_msfs_validate_for_export",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_msfs_get_export_settings",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_batch_export_lods",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "base_name": "Cube",
+      "output_dir": "$ROOT",
+      "separate_files": true
+    }
+  },
+  {
+    "name": "blender_msfs_livery_setup_paint_mode",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "texture_resolution": [
+        32,
+        32
+      ],
+      "create_uvs": true
+    }
+  },
+  {
+    "name": "blender_msfs_livery_create_paint_layers",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "layers": [
+        "base"
+      ],
+      "texture_resolution": [
+        32,
+        32
+      ]
+    }
+  },
+  {
+    "name": "blender_msfs_livery_load_template_overlay",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "image_path": "$IMAGE",
+      "object_name": "Cube",
+      "opacity": 0.5
+    }
+  },
+  {
+    "name": "blender_msfs_livery_export_uv_layout",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Cube",
+      "output_path": "$OUT/uv.png",
+      "resolution": [
+        32,
+        32
+      ]
+    },
+    "allowed_error_codes": [
+      "context_required"
+    ]
+  },
+  {
+    "name": "blender_msfs_livery_set_paint_brush",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "preset": "soft_airbrush"
+    }
+  },
+  {
+    "name": "blender_msfs_livery_sample_color",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires optional Pillow dependency not bundled with Blender",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_get_paint_presets",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_get_aircraft_templates",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_get_template_info",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "aircraft_id": "fbw_a32nx"
+    }
+  },
+  {
+    "name": "blender_msfs_livery_download_template",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires external template download source",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_analyze",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires optional Pillow/image-analysis dependency",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_transfer",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires optional Pillow/image-processing dependency",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_extract_colors",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires optional Pillow dependency not bundled with Blender",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_map_elements",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "source_aircraft": "fbw_a32nx",
+      "target_aircraft": "fenix_a320",
+      "elements": [
+        "fuselage"
+      ]
+    }
+  },
+  {
+    "name": "blender_msfs_livery_export_textures",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "output_dir": "$ROOT",
+      "texture_types": [
+        "base_color"
+      ],
+      "format": "PNG"
+    }
+  },
+  {
+    "name": "blender_msfs_livery_create_package",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "aircraft_id": "fbw_a32nx",
+      "livery_name": "QualLivery",
+      "output_dir": "$ROOT",
+      "author": "MCP"
+    }
+  },
+  {
+    "name": "blender_msfs_livery_convert_to_dds",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires optional external DDS conversion tool",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_msfs_livery_validate_package",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "package_dir": "$ROOT"
+    }
+  },
+  {
+    "name": "blender_mesh_extrude",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "indices": [
+        0
+      ],
+      "offset": [
+        0,
+        0,
+        0.1
+      ],
+      "mode": "FACES"
+    }
+  },
+  {
+    "name": "blender_mesh_inset",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "face_indices": [
+        0
+      ],
+      "thickness": 0.05
+    }
+  },
+  {
+    "name": "blender_mesh_bevel",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ],
+      "width": 0.05,
+      "segments": 1
+    }
+  },
+  {
+    "name": "blender_mesh_loop_cut",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Cube",
+      "edge_index": 0,
+      "cuts": 1
+    }
+  },
+  {
+    "name": "blender_curve_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ],
+        [
+          1,
+          1,
+          0
+        ]
+      ],
+      "name": "NewCurve",
+      "type": "POLY"
+    }
+  },
+  {
+    "name": "blender_curve_to_mesh",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "curve_name": "Curve",
+      "bevel_depth": 0.05,
+      "apply_as_mesh": true
+    }
+  },
+  {
+    "name": "blender_curve_from_mesh_edge",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0,
+        1
+      ]
+    }
+  },
+  {
+    "name": "blender_text_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "content": "A",
+      "name": "NewText",
+      "size": 1.0
+    }
+  },
+  {
+    "name": "blender_text_set_properties",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "TextObj",
+      "content": "B",
+      "size": 1.0
+    }
+  },
+  {
+    "name": "blender_text_to_mesh",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "TextObj",
+      "keep_original": false
+    }
+  },
+  {
+    "name": "blender_text_add_relief",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "content": "A",
+      "target_object": "Target",
+      "fit_box": {
+        "x_min": -0.5,
+        "x_max": 0.5,
+        "y_min": -0.5,
+        "y_max": 0.5
+      },
+      "z_bottom": 1.0,
+      "size": 1.0,
+      "extrude": 0.2,
+      "solver": "EXACT"
+    }
+  },
+  {
+    "name": "blender_mesh_add_relief",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "source_objects": [
+        "Source"
+      ],
+      "target_object": "Target",
+      "fit_box": {
+        "x_min": -0.5,
+        "x_max": 0.5,
+        "y_min": -0.5,
+        "y_max": 0.5
+      },
+      "z_bottom": 1.0,
+      "solver": "EXACT"
+    }
+  },
+  {
+    "name": "blender_boolean_op",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "target": "Target",
+      "tool": "Tool",
+      "operation": "UNION",
+      "solver": "FLOAT",
+      "apply": false
+    }
+  },
+  {
+    "name": "blender_mesh_from_data",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "FromData",
+      "vertices": [
+        [
+          -1,
+          -1,
+          0
+        ],
+        [
+          1,
+          -1,
+          0
+        ],
+        [
+          1,
+          1,
+          0
+        ],
+        [
+          -1,
+          1,
+          0
+        ]
+      ],
+      "faces": [
+        [
+          0,
+          1,
+          2,
+          3
+        ]
+      ]
+    }
+  },
+  {
+    "name": "blender_object_set_origin",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "origin_type": "GEOMETRY"
+    }
+  },
+  {
+    "name": "blender_object_apply_transforms",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "location": false,
+      "rotation": false,
+      "scale": true
+    }
+  },
+  {
+    "name": "blender_object_rename",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "DeleteMe",
+      "new_name": "Renamed"
+    }
+  },
+  {
+    "name": "blender_object_get_bounds",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "name": "Cube"
+    }
+  },
+  {
+    "name": "blender_execute_script",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "script": "result = {\"qualified\": True}"
+    }
+  },
+  {
+    "name": "blender_render_multi_angle",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Target",
+      "angles": [
+        "front"
+      ],
+      "resolution": [
+        32,
+        32
+      ],
+      "output_dir": "$ROOT"
+    }
+  },
+  {
+    "name": "blender_analyze_viewport",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires external Ollama vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_refine_iteration",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires external Ollama vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_refine_create_session",
+    "status": "SKIP_EXTERNAL",
+    "reason": "refinement workflow requires external vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_refine_get_session",
+    "status": "SKIP_EXTERNAL",
+    "reason": "refinement workflow requires external vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_refine_list_sessions",
+    "status": "SKIP_EXTERNAL",
+    "reason": "refinement workflow requires external vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_evaluate",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires external Ollama vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_refine",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires external Ollama vision service",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_mesh_cleanup",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_ai_mesh_decimate",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "ratio": 0.8
+    }
+  },
+  {
+    "name": "blender_ai_mesh_remesh",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "method": "VOXEL",
+      "voxel_size": 0.5
+    }
+  },
+  {
+    "name": "blender_ai_mesh_optimize",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "cleanup": true,
+      "decimate": false,
+      "auto_uv": false
+    }
+  },
+  {
+    "name": "blender_ai_auto_uv",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "method": "SMART"
+    }
+  },
+  {
+    "name": "blender_ai_fix_mesh_issues",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "fill_holes": false
+    }
+  },
+  {
+    "name": "blender_ai_mesh_stats",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_ai_probe_backends",
+    "status": "SKIP_EXTERNAL",
+    "reason": "probes optional external/local AI services",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_pipeline_generate",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires configured AI providers",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_ai_pipeline_status",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires external pipeline job",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_mesh_select",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "mode": "VERT",
+      "action": "SET",
+      "indices": [
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_select_trait",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "trait": "BOUNDARY"
+    }
+  },
+  {
+    "name": "blender_mesh_select_linked_flat",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "face_index": 0
+    }
+  },
+  {
+    "name": "blender_mesh_select_shortest_path",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "index_a": 0,
+      "index_b": 1,
+      "mode": "VERT"
+    }
+  },
+  {
+    "name": "blender_mesh_get_selection",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube",
+      "mode": "VERT"
+    }
+  },
+  {
+    "name": "blender_mesh_select_edge_loops",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_index": 0
+    }
+  },
+  {
+    "name": "blender_shade_smooth",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "shade_type": "SMOOTH"
+    }
+  },
+  {
+    "name": "blender_mesh_crease",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ],
+      "crease_value": 0.5
+    }
+  },
+  {
+    "name": "blender_mesh_mark_sharp",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_mark_seam",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_dissolve",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "mode": "EDGES",
+      "indices": [
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_merge",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "vertex_indices": [
+        0,
+        1
+      ],
+      "merge_type": "CENTER"
+    }
+  },
+  {
+    "name": "blender_mesh_bridge",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "loop1_edges": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop2_edges": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "segments": 1
+    }
+  },
+  {
+    "name": "blender_mesh_fill",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "fill_type": "NGON"
+    }
+  },
+  {
+    "name": "blender_mesh_subdivide",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ],
+      "cuts": 1
+    }
+  },
+  {
+    "name": "blender_mesh_edge_slide",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ],
+      "factor": 0.1
+    }
+  },
+  {
+    "name": "blender_mesh_tris_to_quads",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "face_indices": [
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_triangulate",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_mesh_knife_project",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "target_object": "Target",
+      "cutter_object": "Tool"
+    },
+    "allowed_error_codes": [
+      "context_required"
+    ]
+  },
+  {
+    "name": "blender_mesh_bisect",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "plane_point": [
+        0,
+        0,
+        0
+      ],
+      "plane_normal": [
+        0,
+        0,
+        1
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_separate_selected",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "face_indices": [
+        0
+      ],
+      "new_name": "Separated"
+    }
+  },
+  {
+    "name": "blender_mesh_split",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "indices": [
+        0
+      ],
+      "mode": "EDGES"
+    }
+  },
+  {
+    "name": "blender_silhouette_compare",
+    "status": "SKIP_EXTERNAL",
+    "reason": "requires optional Pillow image-analysis dependency not bundled with Blender",
+    "risk": "external",
+    "payload": {}
+  },
+  {
+    "name": "blender_measure",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "mode": "BBOX"
+    }
+  },
+  {
+    "name": "blender_reference_image_setup",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "image_path": "$IMAGE",
+      "axis": "FRONT"
+    }
+  },
+  {
+    "name": "blender_array_along_curve",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "source_object": "Source",
+      "curve_name": "Curve",
+      "count": 2,
+      "fit_type": "FIXED_COUNT",
+      "apply": false
+    }
+  },
+  {
+    "name": "blender_scatter_on_surface",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "target_object": "Target",
+      "source_object": "Source",
+      "count": 2,
+      "seed": 1
+    }
+  },
+  {
+    "name": "blender_collection_instance",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "collection_name": "TestCollection",
+      "locations": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          0,
+          0
+        ]
+      ]
+    }
+  },
+  {
+    "name": "blender_mesh_proportional_transform",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "vertex_indices": [
+        0
+      ],
+      "value": [
+        0.1,
+        0,
+        0
+      ],
+      "transform_type": "TRANSLATE",
+      "radius": 1.0
+    }
+  },
+  {
+    "name": "blender_mesh_shrinkwrap",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "target_object": "Target",
+      "vertex_indices": [
+        0
+      ],
+      "mode": "NEAREST_SURFACE"
+    }
+  },
+  {
+    "name": "blender_mesh_flatten",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "vertex_indices": [
+        0,
+        1,
+        2
+      ],
+      "plane": "BEST_FIT"
+    }
+  },
+  {
+    "name": "blender_sculpt_setup",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "mode": "SIMPLE"
+    }
+  },
+  {
+    "name": "blender_sculpt_mesh_filter",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "filter_type": "SMOOTH",
+      "strength": 0.1,
+      "iterations": 1
+    }
+  },
+  {
+    "name": "blender_sculpt_mask_by_topology",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "mask_type": "ALL"
+    }
+  },
+  {
+    "name": "blender_sculpt_face_set_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "criteria": "LINKED"
+    }
+  },
+  {
+    "name": "blender_sculpt_multires_reshape",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "action": "SUBDIVIDE"
+    }
+  },
+  {
+    "name": "blender_sculpt_to_retopo",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "method": "VOXEL_REMESH",
+      "target_polycount": 50,
+      "bake_displacement": false
+    }
+  },
+  {
+    "name": "blender_sculpt_extract_mask",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Target",
+      "thickness": 0.01,
+      "smooth_iterations": 0
+    }
+  },
+  {
+    "name": "blender_sculpt_remesh_voxel",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {
+      "object_name": "Cube",
+      "voxel_size": 0.5
+    }
+  },
+  {
+    "name": "blender_armature_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "bones": [
+        {
+          "name": "Root",
+          "head": [
+            0,
+            0,
+            0
+          ],
+          "tail": [
+            0,
+            0,
+            1
+          ]
+        }
+      ],
+      "name": "NewRig"
+    }
+  },
+  {
+    "name": "blender_autorig_preset",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "preset": "BIPED",
+      "auto_weight": false
+    }
+  },
+  {
+    "name": "blender_constraint_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "constraint_type": "COPY_LOCATION",
+      "object_name": "Cube",
+      "target_object": "Target"
+    }
+  },
+  {
+    "name": "blender_constraint_preset",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "armature_name": "Rig",
+      "preset": "IK_ARM",
+      "bones": {
+        "ik_bone": "Bone",
+        "chain_count": 1
+      }
+    }
+  },
+  {
+    "name": "blender_bone_shape_assign",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "armature_name": "Rig",
+      "bone_name": "Bone",
+      "shape": "CIRCLE"
+    }
+  },
+  {
+    "name": "blender_pose_library_save",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "armature_name": "Rig",
+      "pose_name": "QualPose"
+    }
+  },
+  {
+    "name": "blender_pose_library_apply",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "armature_name": "Rig",
+      "pose_name": "QualPose"
+    }
+  },
+  {
+    "name": "blender_rig_validate",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "armature_name": "Rig"
+    }
+  },
+  {
+    "name": "blender_physics_rigid_body_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Source"
+    }
+  },
+  {
+    "name": "blender_physics_rigid_body_batch",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_names": [
+        "Source",
+        "Target"
+      ],
+      "mass": 1.0
+    }
+  },
+  {
+    "name": "blender_physics_simulate",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "frame_start": 1,
+      "frame_end": 2,
+      "apply_results": false
+    }
+  },
+  {
+    "name": "blender_physics_cloth_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Source",
+      "preset": "COTTON"
+    }
+  },
+  {
+    "name": "blender_physics_soft_body_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Source"
+    }
+  },
+  {
+    "name": "blender_physics_fluid_quick",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "domain_object": "Domain",
+      "flow_object": "Flow",
+      "fluid_type": "GAS",
+      "resolution": 16
+    }
+  },
+  {
+    "name": "blender_annotation_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "points": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          0
+        ]
+      ],
+      "layer_name": "Qual"
+    }
+  },
+  {
+    "name": "blender_annotation_text",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "text": "A",
+      "location": [
+        0,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_annotation_dimension",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "point_a": [
+        0,
+        0,
+        0
+      ],
+      "point_b": [
+        1,
+        0,
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_annotation_clear",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {}
+  },
+  {
+    "name": "blender_grease_pencil_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "strokes": [
+        {
+          "points": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              1,
+              0,
+              0
+            ]
+          ]
+        }
+      ],
+      "name": "GP"
+    }
+  },
+  {
+    "name": "blender_grease_pencil_markup",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "render_path": "$IMAGE",
+      "annotations": [
+        {
+          "type": "rectangle",
+          "start": [
+            2,
+            2
+          ],
+          "end": [
+            12,
+            12
+          ],
+          "color": "red"
+        }
+      ],
+      "output_path": "$OUT/markup.png"
+    }
+  },
+  {
+    "name": "blender_material_inspect_graph",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "material_name": "Mat"
+    }
+  },
+  {
+    "name": "blender_material_node_add",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "node_type": "ShaderNodeTexNoise",
+      "name": "Noise"
+    }
+  },
+  {
+    "name": "blender_material_node_connect",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "from_node": "Principled BSDF",
+      "from_output": "BSDF",
+      "to_node": "Material Output",
+      "to_input": "Surface"
+    }
+  },
+  {
+    "name": "blender_material_node_group_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "MatGroup",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "name": "blender_material_procedural_preset",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "ProcMat",
+      "preset": "CHROME"
+    }
+  },
+  {
+    "name": "blender_material_convert_to_pbr",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "target_format": "GLTF"
+    }
+  },
+  {
+    "name": "blender_material_preview_render",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "material_name": "Mat",
+      "preview_shape": "SPHERE",
+      "output_path": "$OUT/material.png",
+      "resolution": 32,
+      "engine": "EEVEE"
+    }
+  },
+  {
+    "name": "blender_measure_surface_area",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_measure_volume",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_measure_clearance",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_a": "Target",
+      "object_b": "Tool",
+      "sample_count": 10
+    }
+  },
+  {
+    "name": "blender_validate_dimensions",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube",
+      "expected": {
+        "x": 2.0,
+        "y": 2.0,
+        "z": 2.0
+      },
+      "tolerance": 0.1
+    }
+  },
+  {
+    "name": "blender_calibrate_from_reference",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "known_dimension": 2.0,
+      "dimension_axis": "X"
+    }
+  },
+  {
+    "name": "blender_measure_edge_angle",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube",
+      "edge_indices": [
+        0
+      ]
+    }
+  },
+  {
+    "name": "blender_validate_mesh_quality",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_mesh_check_watertight",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  },
+  {
+    "name": "blender_mesh_bake_heightmap",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "object_name": "Cube",
+      "bb_min": [
+        -1,
+        -1,
+        -1
+      ],
+      "bb_max": [
+        1,
+        1,
+        1
+      ],
+      "output_path": "$OUT/height.png",
+      "resolution": 16
+    }
+  },
+  {
+    "name": "blender_collection_create",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "NewCollection"
+    }
+  },
+  {
+    "name": "blender_collection_list",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {}
+  },
+  {
+    "name": "blender_collection_move",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_names": [
+        "Source"
+      ],
+      "target_collection": "TestCollection",
+      "remove_from_current": false
+    }
+  },
+  {
+    "name": "blender_collection_visibility",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "collection_name": "TestCollection",
+      "visible": true
+    }
+  },
+  {
+    "name": "blender_undo",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {}
+  },
+  {
+    "name": "blender_redo",
+    "status": "PASS",
+    "reason": null,
+    "risk": "context_heavy",
+    "payload": {}
+  },
+  {
+    "name": "blender_save",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {}
+  },
+  {
+    "name": "blender_save_as",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "filepath": "$OUT/saved.blend",
+      "overwrite": true,
+      "copy": true
+    }
+  },
+  {
+    "name": "blender_bake_pbr_batch",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "object_name": "Cube",
+      "output_dir": "$ROOT",
+      "channels": [
+        "AO"
+      ],
+      "resolution": 16,
+      "samples": 1
+    }
+  },
+  {
+    "name": "blender_bake_highpoly_to_lowpoly",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "lowpoly_name": "LowPoly",
+      "highpoly_name": "HighPoly",
+      "output_dir": "$ROOT",
+      "channels": [
+        "NORMAL"
+      ],
+      "resolution": 16,
+      "samples": 1
+    }
+  },
+  {
+    "name": "blender_bake_from_multires",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "object_name": "Target",
+      "output_path": "$OUT/multires.png",
+      "map_type": "NORMALS",
+      "resolution": 16
+    }
+  },
+  {
+    "name": "blender_bake_to_vertex_colors",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "object_name": "Cube",
+      "bake_type": "AO",
+      "samples": 1
+    }
+  },
+  {
+    "name": "blender_bake_curvature",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "object_name": "Cube",
+      "output_path": "$OUT/curvature.png",
+      "resolution": 16
+    }
+  },
+  {
+    "name": "blender_bake_id_map",
+    "status": "PASS",
+    "reason": null,
+    "risk": "blocking",
+    "payload": {
+      "object_name": "Cube",
+      "output_path": "$OUT/id.png",
+      "resolution": 16
+    }
+  },
+  {
+    "name": "blender_geonode_create_group",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "name": "NewGeo",
+      "inputs": [],
+      "outputs": []
+    }
+  },
+  {
+    "name": "blender_geonode_apply",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Cube",
+      "node_group": "GeoGroup",
+      "inputs": {}
+    }
+  },
+  {
+    "name": "blender_geonode_scatter_instances",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "target_object": "Target",
+      "instance_object": "Source",
+      "density": 1.0,
+      "seed": 1,
+      "scale_min": 1.0,
+      "scale_max": 1.0,
+      "rotation_random": false,
+      "align_to_normal": false
+    }
+  },
+  {
+    "name": "blender_geonode_array_grid",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Target",
+      "instance_object": "Source",
+      "grid_type": "LINEAR",
+      "count_x": 2,
+      "spacing_x": 1.0
+    }
+  },
+  {
+    "name": "blender_geonode_deform_curve",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "object_name": "Target",
+      "curve_name": "Curve",
+      "stretch": false
+    }
+  },
+  {
+    "name": "blender_geonode_extrude_profile",
+    "status": "PASS",
+    "reason": null,
+    "risk": "bounded_mutation",
+    "payload": {
+      "profile_object": "Profile",
+      "curve_name": "Curve",
+      "name": "Extruded",
+      "fill_caps": true
+    }
+  },
+  {
+    "name": "blender_geonode_inspect",
+    "status": "PASS",
+    "reason": null,
+    "risk": "read",
+    "payload": {
+      "object_name": "Cube"
+    }
+  }
+]
